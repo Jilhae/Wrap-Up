@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Wrap-Up">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
+<title>Wrap-Up</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0E1115; --surface:#161B20; --elev:#1C232B; --line:#262F39; --hair:#1E252D;
+    --tx:#E8EDF2; --muted:#7E8C9A; --faint:#566270;
+    --actual:#FF7A45; --goal:#46C9BC; --good:#93E05A; --bad:#FF5C72; --gold:#E8C25A;
+    --disp:'Space Grotesk',system-ui,sans-serif; --mono:'Space Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--tx);font-family:var(--disp);
+    -webkit-font-smoothing:antialiased;line-height:1.45;
+    padding:max(20px,env(safe-area-inset-top)) 18px calc(40px + env(safe-area-inset-bottom));}
+  .wrap{max-width:1080px;margin:0 auto}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;
+    gap:16px;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:20px}
+  .eyebrow{font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--actual);
+    font-weight:700;margin-bottom:8px}
+  h1{font-size:30px;font-weight:700;letter-spacing:-.01em}
+  .pick{position:relative}
+  select{appearance:none;-webkit-appearance:none;background:var(--elev);color:var(--tx);
+    border:1px solid var(--line);border-radius:12px;font-family:var(--mono);font-size:14px;
+    padding:11px 40px 11px 16px;cursor:pointer;letter-spacing:.02em}
+  select:focus-visible{outline:2px solid var(--goal);outline-offset:2px}
+  .pick::after{content:"";position:absolute;right:15px;top:50%;width:8px;height:8px;
+    border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);
+    transform:translateY(-70%) rotate(45deg);pointer-events:none}
+  .src{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:7px;text-align:right;min-height:14px}
+
+  .fabwrap{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:60;display:flex;flex-direction:column;align-items:center;gap:12px}
+  .fab-menu{display:flex;flex-direction:column;gap:12px;align-items:center;opacity:0;transform:translateY(10px) scale(.92);pointer-events:none;transition:.2s ease}
+  .fabwrap.open .fab-menu{opacity:1;transform:none;pointer-events:auto}
+  .fab-act{width:48px;height:48px;border-radius:14px;border:1px solid var(--line);background:var(--elev);color:var(--actual);display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.45);-webkit-tap-highlight-color:transparent}
+  .fab-act:active{transform:scale(.93)}
+  .fab-act svg{width:22px;height:22px}
+  .fab-act.spin svg{animation:spin .7s linear infinite;transform-origin:center}
+  .fab{width:54px;height:54px;border-radius:16px;border:1px solid var(--line);background:var(--elev);color:var(--actual);cursor:pointer;display:grid;place-items:center;box-shadow:0 10px 26px rgba(0,0,0,.5);-webkit-tap-highlight-color:transparent}
+  .fab:active{transform:scale(.93)}
+  .fabwrap.open .fab{color:var(--tx)}
+  .bars{position:relative;width:22px;height:14px}
+  .bars i{position:absolute;left:0;right:0;height:2px;background:currentColor;border-radius:2px;transition:.25s ease}
+  .bars i:nth-child(1){top:0}
+  .bars i:nth-child(2){top:6px}
+  .bars i:nth-child(3){top:12px}
+  .fabwrap.open .bars i{top:6px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .gate{position:fixed;inset:0;z-index:200;background:var(--bg);display:none;align-items:center;justify-content:center;padding:24px}
+  .gate.show{display:flex}
+  .gate-box{width:100%;max-width:340px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:30px 26px;text-align:center}
+  .gate-box .eyebrow{margin-bottom:14px}
+  .gate-box p{color:var(--muted);font-size:14px;margin-bottom:16px}
+  .gate-box input{width:100%;background:var(--elev);border:1px solid var(--line);border-radius:12px;color:var(--tx);font-family:var(--mono);font-size:16px;padding:13px 15px;margin-bottom:12px}
+  .gate-box input:focus-visible{outline:2px solid var(--goal);outline-offset:2px}
+  .gate-box button{width:100%;background:var(--actual);color:#11151a;border:none;border-radius:12px;font-family:var(--disp);font-weight:700;font-size:15px;padding:13px;cursor:pointer}
+  .gate-err{color:var(--bad);font-size:13px;margin-top:12px;min-height:16px;font-family:var(--mono)}
+
+  .loader{position:fixed;inset:0;z-index:180;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+  .loader.show{display:flex}
+  .loader-icon{width:92px;height:92px;animation:pulse 1.3s ease-in-out infinite}
+  .loader-icon svg{width:100%;height:100%;display:block}
+  .loader-icon path.ln{filter:drop-shadow(0 0 5px rgba(255,122,69,.55))}
+  .loader-txt{font-size:11px;letter-spacing:.34em;color:var(--actual);font-weight:700}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.09);opacity:1}}
+
+  .tabs{display:inline-flex;background:var(--elev);border:1px solid var(--line);border-radius:13px;
+    padding:4px;gap:2px;margin-bottom:22px}
+  .tab{appearance:none;background:none;border:none;color:var(--muted);font-family:var(--disp);
+    font-size:13px;font-weight:600;padding:8px 15px;border-radius:9px;cursor:pointer}
+  .tab.on{background:var(--actual);color:#11151a}
+  .tab:focus-visible{outline:2px solid var(--goal);outline-offset:2px}
+
+  .hero{background:var(--surface);border:1px solid var(--line);border-radius:20px;
+    padding:26px 28px;margin-bottom:18px;position:relative;overflow:hidden}
+  .hero::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;
+    background:linear-gradient(90deg,var(--actual),transparent 70%)}
+  .hero-top{display:flex;flex-wrap:wrap;gap:24px;align-items:baseline;justify-content:space-between}
+  .lab{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .deficit{font-family:var(--mono);font-weight:700;font-size:clamp(38px,8vw,60px);
+    line-height:1;letter-spacing:-.02em;margin-top:6px}
+  .deficit.cut{color:var(--good)} .deficit.surp{color:var(--bad)}
+  .deficit small{font-size:.4em;color:var(--muted);font-weight:400;margin-left:8px;letter-spacing:0}
+  .predict{text-align:right}
+  .predict .kg{font-family:var(--mono);font-weight:700;font-size:34px;color:var(--gold)}
+  .predict .cap{font-size:12px;color:var(--muted);margin-top:4px}
+
+  .bar{margin-top:26px}
+  .track{position:relative;height:26px;background:var(--hair);border-radius:8px;overflow:visible}
+  .fill{position:absolute;left:0;top:0;bottom:0;border-radius:8px 4px 4px 8px;
+    background:linear-gradient(90deg,#FF6A33,#FF9466);transition:width .9s cubic-bezier(.22,1,.36,1)}
+  .marker{position:absolute;top:-8px;bottom:-8px;width:2px;background:var(--gold);transition:left .9s cubic-bezier(.22,1,.36,1)}
+  .marker span{position:absolute;top:-19px;left:50%;transform:translateX(-50%);white-space:nowrap;
+    font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.04em}
+  .legend{display:flex;gap:22px;margin-top:18px;flex-wrap:wrap}
+  .legend div{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  .legend b{font-family:var(--mono);color:var(--tx);font-weight:700}
+  .dot{width:10px;height:10px;border-radius:3px}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:30px}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 16px 15px;position:relative}
+  .wadd{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--elev);color:var(--actual);display:none;align-items:center;justify-content:center;cursor:pointer;padding:0}
+  .wadd.show{display:inline-flex}
+  .wadd svg{width:17px;height:17px}
+  .wadd::after{content:"+";position:absolute;top:-7px;right:-7px;width:16px;height:16px;background:var(--actual);color:#11151a;border-radius:50%;font-size:12px;font-weight:700;display:grid;place-items:center;font-family:var(--disp)}
+
+  .modal{position:fixed;inset:0;z-index:150;background:rgba(8,10,13,.72);display:none;align-items:center;justify-content:center;padding:24px}
+  .modal.show{display:flex}
+  .modal-box{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:24px 22px}
+  .modal-title{font-weight:700;font-size:17px;margin-bottom:18px}
+  .modal-box label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px 2px}
+  .modal-box input{width:100%;background:var(--elev);border:1px solid var(--line);border-radius:12px;color:var(--tx);font-family:var(--mono);font-size:17px;padding:12px 14px;margin-bottom:14px}
+  .modal-box input:focus-visible{outline:2px solid var(--goal);outline-offset:2px}
+  .modal-actions{display:flex;gap:10px;margin-top:4px}
+  .btn-ghost{flex:1;background:var(--elev);border:1px solid var(--line);color:var(--tx);border-radius:12px;font-family:var(--disp);font-weight:600;font-size:14px;padding:12px;cursor:pointer}
+  .btn-ghost.danger{color:var(--bad);border-color:transparent;background:none}
+  .btn-primary{flex:1.4;background:var(--actual);color:#11151a;border:none;border-radius:12px;font-family:var(--disp);font-weight:700;font-size:14px;padding:12px;cursor:pointer}
+  .btn-primary:disabled{opacity:.5}
+  .modal-err{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:12px;min-height:14px;text-align:center}
+  .goal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;margin-bottom:6px}
+  .goal-grid label{display:block;font-size:12px;color:var(--muted);margin:0 0 5px 2px}
+  .goal-grid input{width:100%;background:var(--elev);border:1px solid var(--line);border-radius:11px;color:var(--tx);font-family:var(--mono);font-size:16px;padding:10px 12px}
+  .goal-grid input:focus-visible{outline:2px solid var(--goal);outline-offset:2px}
+  .kpi .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .kpi .v{font-family:var(--mono);font-weight:700;font-size:24px;margin-top:9px;letter-spacing:-.01em}
+  .kpi .sub{font-family:var(--mono);font-size:12px;color:var(--faint);margin-top:3px}
+  .kpi .v.gold{color:var(--gold)}
+
+  .sec{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);
+    font-weight:600;margin:0 0 14px 2px}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 18px 12px}
+  .chead{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+  .ctitle{font-size:14px;font-weight:600}
+  .cnow{font-family:var(--mono);font-size:20px;font-weight:700}
+  .cgoal{font-family:var(--mono);font-size:11px;color:var(--goal);margin-left:auto;padding-left:10px}
+  .streak{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-weight:700;font-size:12px;color:var(--faint)}
+  .streak.on{color:var(--actual)}
+  .streak.on .fl{filter:drop-shadow(0 0 5px rgba(255,122,69,.55))}
+  .streak .fl{display:block}
+  .cbody{height:132px;position:relative}
+  .cfoot{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:8px;
+    display:flex;justify-content:space-between}
+  .hit{color:var(--good)} .miss{color:var(--actual)}
+
+  .wcard{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:24px 26px;margin-bottom:18px}
+  .wbody{height:300px;position:relative;margin-top:6px}
+  .wlegend{display:flex;gap:22px;margin-top:16px;flex-wrap:wrap}
+  .wlegend div{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  .dash{width:16px;height:0;border-top:2px dashed var(--goal)}
+
+  footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);
+    font-family:var(--mono);font-size:12px;color:var(--faint)}
+  footer a{color:var(--actual);text-decoration:none}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--elev);
+    border:1px solid var(--bad);color:var(--tx);font-size:13px;padding:11px 18px;border-radius:12px;
+    display:none;max-width:90%}
+
+  @media(max-width:720px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .grid{grid-template-columns:1fr}
+    .hero-top{gap:14px}.predict{text-align:left}
+    header{flex-direction:column;align-items:flex-start;gap:14px}
+    .src{text-align:left}
+  }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Wrap-Up</div>
+      <h1 id="hTitle">—</h1>
+    </div>
+    <div>
+      <span class="pick" id="pickWrap"><select id="periodSel" aria-label="Период"></select></span>
+      <div class="src" id="src"></div>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" data-scope="week">Неделя</button>
+    <button class="tab on" data-scope="month">Месяц</button>
+    <button class="tab" data-scope="year">Год</button>
+    <button class="tab" data-scope="weight">Тренд веса</button>
+  </div>
+
+  <div id="dashView">
+    <section class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="lab" id="defLab">Дефицит за месяц</div>
+          <div class="deficit num" id="defVal">—</div>
+        </div>
+        <div class="predict">
+          <div class="kg num" id="kgCalc">—</div>
+          <div class="cap">расчётный отвес по дефициту</div>
+        </div>
+      </div>
+      <div class="bar">
+        <div class="track">
+          <div class="fill" id="fill" style="width:0%"></div>
+          <div class="marker" id="marker" style="left:0%"><span>поддержание</span></div>
+        </div>
+        <div class="legend">
+          <div><span class="dot" style="background:var(--actual)"></span>Съедено <b class="num" id="lgEaten">—</b></div>
+          <div><span class="dot" style="background:var(--gold)"></span>Норма <b class="num" id="lgNorm">—</b></div>
+          <div><span class="dot" style="background:var(--good)"></span>Дней записано <b class="num" id="lgDays">—</b></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="kpis">
+      <div class="kpi"><div class="k">Съедено</div><div class="v num" id="kEaten">—</div><div class="sub">ккал за период</div></div>
+      <div class="kpi"><div class="k">Норма</div><div class="v num" id="kNorm">—</div><div class="sub">поддержание × дни</div></div>
+      <div class="kpi"><div class="k">Вес факт</div><div class="v num gold" id="kWfact">—</div><div class="sub" id="kWfactSub">нач − кон</div>
+        <button class="wadd" id="wAdd" aria-label="Записать вес" title="Записать вес"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg></button>
+      </div>
+      <div class="kpi"><div class="k">Расхождение</div><div class="v num" id="kDiff">—</div><div class="sub">факт − расчёт</div></div>
+    </div>
+
+    <div class="sec" id="gridSec">метрики месяца · факт против цели</div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div id="weightView" style="display:none">
+    <section class="wcard">
+      <div class="lab">Тренд веса · факт против расчёта</div>
+      <div class="wbody"><canvas id="weightCanvas"></canvas></div>
+      <div class="wlegend">
+        <div><span class="dot" style="background:var(--gold)"></span>Фактический вес (взвешивания)</div>
+        <div><span class="dash"></span>Расчётная траектория (по дефициту)</div>
+      </div>
+    </section>
+    <div class="kpis">
+      <div class="kpi"><div class="k">Текущий вес</div><div class="v num gold" id="wCur">—</div><div class="sub">последнее взвешивание</div></div>
+      <div class="kpi"><div class="k">Отвес факт</div><div class="v num" id="wFact">—</div><div class="sub">старт − финиш</div></div>
+      <div class="kpi"><div class="k">Отвес расчёт</div><div class="v num" id="wCalc">—</div><div class="sub">сумма по дефициту</div></div>
+      <div class="kpi"><div class="k">Расхождение</div><div class="v num gold" id="wDiff">—</div><div class="sub">факт − расчёт</div></div>
+    </div>
+  </div>
+
+  <footer>made by <a href="https://t.me/jilhae1">@jilhae1</a></footer>
+</div>
+<div class="loader show" id="loader">
+  <div class="loader-icon">
+    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1.5" y="1.5" width="117" height="117" rx="28" fill="#13171C" stroke="#262F39"/>
+      <line x1="30" y1="64" x2="90" y2="64" stroke="#46C9BC" stroke-width="2.4" stroke-dasharray="6 5" stroke-linecap="round"/>
+      <path class="ln" d="M28 58 L42 72 L52 50 L64 70 L76 56 L92 86" stroke="#FF7A45" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="92" cy="86" r="6.5" fill="#fff"/>
+      <circle cx="92" cy="86" r="4.5" fill="#FF7A45"/>
+    </svg>
+  </div>
+  <div class="loader-txt">WRAP-UP</div>
+</div>
+
+<div class="fabwrap" id="fabwrap">
+  <div class="fab-menu" id="fabMenu">
+    <button class="fab-act" id="goalsBtn" aria-label="Цели">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"/><circle cx="12" cy="8" r="6"/></svg>
+    </button>
+    <button class="fab-act" id="refreshBtn" aria-label="Обновить данные">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+    </button>
+  </div>
+  <button class="fab" id="fabToggle" aria-label="Меню"><span class="bars"><i></i><i></i><i></i></span></button>
+</div>
+<div class="toast" id="toast"></div>
+
+<div class="gate" id="gate">
+  <div class="gate-box">
+    <div class="eyebrow">Wrap-Up</div>
+    <p>Введите пароль</p>
+    <input type="password" id="gatePass" autocomplete="current-password" inputmode="text" placeholder="пароль">
+    <button id="gateBtn">Войти</button>
+    <div class="gate-err" id="gateErr"></div>
+  </div>
+</div>
+
+<div class="modal" id="wModal">
+  <div class="modal-box">
+    <div class="modal-title">Вес за <span id="wmMonth"></span></div>
+    <label>Вес в начале месяца, кг</label>
+    <input type="number" inputmode="decimal" step="0.1" id="wmStart" placeholder="—">
+    <label>Вес в конце месяца, кг</label>
+    <input type="number" inputmode="decimal" step="0.1" id="wmEnd" placeholder="—">
+    <div class="modal-actions">
+      <button class="btn-ghost danger" id="wmRemove">Убрать</button>
+      <button class="btn-ghost" id="wmCancel">Отмена</button>
+      <button class="btn-primary" id="wmSave">Сохранить</button>
+    </div>
+    <div class="modal-err" id="wmErr"></div>
+  </div>
+</div>
+
+<div class="modal" id="gModal">
+  <div class="modal-box">
+    <div class="modal-title">Цели</div>
+    <div class="goal-grid">
+      <div><label>Шаги</label><input id="gSteps" type="number" inputmode="numeric"></div>
+      <div><label>Сон, ч</label><input id="gSleep" type="number" inputmode="decimal" step="0.1"></div>
+      <div><label>Калории</label><input id="gKcal" type="number" inputmode="numeric"></div>
+      <div><label>Белки, г</label><input id="gProtein" type="number" inputmode="numeric"></div>
+      <div><label>Жиры, г</label><input id="gFat" type="number" inputmode="numeric"></div>
+      <div><label>Углеводы, г</label><input id="gCarbs" type="number" inputmode="numeric"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="gCancel">Отмена</button>
+      <button class="btn-primary" id="gSave">Сохранить</button>
+    </div>
+    <div class="modal-err" id="gErr"></div>
+  </div>
+</div>
+
+<script>
+/* ====== НАСТРОЙКА: вставь сюда URL веб-приложения Apps Script (тот же, что .../exec) ====== */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygGwPe9GMIYC7Eav_8DQ1Hk0yBSMNzYM26RNGLvyFsKC67O0keeLuSj-6bX2kcdf74Lg/exec";
+/* Пока пусто — сайт работает на демо-данных. Вставишь URL — оживёт на реальных. */
+
+const SAMPLE = {"log": [{"date": "2026-09-01", "weekday": "Вт", "sleep": 8.1, "steps": 8400, "kcal": 1980, "protein": 142, "fat": 66, "carbs": 198}, {"date": "2026-09-02", "weekday": "Ср", "sleep": 7.4, "steps": 11200, "kcal": 2210, "protein": 158, "fat": 74, "carbs": 224}, {"date": "2026-09-03", "weekday": "Чт", "sleep": 6.8, "steps": 6500, "kcal": 1750, "protein": 121, "fat": 58, "carbs": 171}, {"date": "2026-09-04", "weekday": "Пт", "sleep": 7.9, "steps": 9800, "kcal": 2050, "protein": 149, "fat": 69, "carbs": 205}, {"date": "2026-09-05", "weekday": "Сб", "sleep": 8.3, "steps": 12500, "kcal": 2280, "protein": 165, "fat": 78, "carbs": 231}, {"date": "2026-09-06", "weekday": "Вс", "sleep": 6.5, "steps": 7200, "kcal": 1840, "protein": 130, "fat": 61, "carbs": 182}, {"date": "2026-09-07", "weekday": "Пн", "sleep": 7.6, "steps": 10100, "kcal": 2120, "protein": 151, "fat": 71, "carbs": 210}, {"date": "2026-09-08", "weekday": "Вт", "sleep": 8.0, "steps": 9300, "kcal": 1990, "protein": 144, "fat": 67, "carbs": 199}, {"date": "2026-09-09", "weekday": "Ср", "sleep": 7.2, "steps": 13100, "kcal": 2330, "protein": 168, "fat": 80, "carbs": 238}, {"date": "2026-09-10", "weekday": "Чт", "sleep": 6.9, "steps": 8800, "kcal": 1910, "protein": 138, "fat": 64, "carbs": 191}, {"date": "2026-09-11", "weekday": "Пт", "sleep": 7.8, "steps": 10600, "kcal": 2160, "protein": 154, "fat": 73, "carbs": 216}, {"date": "2026-09-12", "weekday": "Сб", "sleep": 8.2, "steps": 7600, "kcal": 1870, "protein": 133, "fat": 62, "carbs": 186}, {"date": "2026-09-13", "weekday": "Вс", "sleep": 7.1, "steps": 11800, "kcal": 2240, "protein": 160, "fat": 75, "carbs": 226}, {"date": "2026-09-14", "weekday": "Пн", "sleep": 7.5, "steps": 9000, "kcal": 2010, "protein": 146, "fat": 68, "carbs": 201}, {"date": "2026-09-15", "weekday": "Вт", "sleep": 6.7, "steps": 6900, "kcal": 1790, "protein": 125, "fat": 59, "carbs": 176}, {"date": "2026-09-16", "weekday": "Ср", "sleep": 8.4, "steps": 12100, "kcal": 2270, "protein": 163, "fat": 77, "carbs": 229}, {"date": "2026-09-17", "weekday": "Чт", "sleep": 7.3, "steps": 10300, "kcal": 2130, "protein": 152, "fat": 72, "carbs": 212}, {"date": "2026-09-18", "weekday": "Пт", "sleep": 7.7, "steps": 8200, "kcal": 1950, "protein": 140, "fat": 65, "carbs": 195}, {"date": "2026-10-01", "weekday": "Чт", "sleep": 8.1, "steps": 8400, "kcal": 1980, "protein": 142, "fat": 66, "carbs": 198}, {"date": "2026-10-02", "weekday": "Пт", "sleep": 7.4, "steps": 11200, "kcal": 2210, "protein": 158, "fat": 74, "carbs": 224}, {"date": "2026-10-03", "weekday": "Сб", "sleep": 6.8, "steps": 6500, "kcal": 1750, "protein": 121, "fat": 58, "carbs": 171}, {"date": "2026-10-04", "weekday": "Вс", "sleep": 7.9, "steps": 9800, "kcal": 2050, "protein": 149, "fat": 69, "carbs": 205}, {"date": "2026-10-05", "weekday": "Пн", "sleep": 8.3, "steps": 12500, "kcal": 2280, "protein": 165, "fat": 78, "carbs": 231}, {"date": "2026-10-06", "weekday": "Вт", "sleep": 6.5, "steps": 7200, "kcal": 1840, "protein": 130, "fat": 61, "carbs": 182}, {"date": "2026-10-07", "weekday": "Ср", "sleep": 7.6, "steps": 10100, "kcal": 2120, "protein": 151, "fat": 71, "carbs": 210}, {"date": "2026-10-08", "weekday": "Чт", "sleep": 8.0, "steps": 9300, "kcal": 1990, "protein": 144, "fat": 67, "carbs": 199}, {"date": "2026-10-09", "weekday": "Пт", "sleep": 7.2, "steps": 13100, "kcal": 2330, "protein": 168, "fat": 80, "carbs": 238}, {"date": "2026-10-10", "weekday": "Сб", "sleep": 6.9, "steps": 8800, "kcal": 1910, "protein": 138, "fat": 64, "carbs": 191}, {"date": "2026-10-11", "weekday": "Вс", "sleep": 7.8, "steps": 10600, "kcal": 2160, "protein": 154, "fat": 73, "carbs": 216}, {"date": "2026-10-12", "weekday": "Пн", "sleep": 8.2, "steps": 7600, "kcal": 1870, "protein": 133, "fat": 62, "carbs": 186}, {"date": "2026-10-13", "weekday": "Вт", "sleep": 7.1, "steps": 11800, "kcal": 2240, "protein": 160, "fat": 75, "carbs": 226}, {"date": "2026-10-14", "weekday": "Ср", "sleep": 7.5, "steps": 9000, "kcal": 2010, "protein": 146, "fat": 68, "carbs": 201}, {"date": "2026-10-15", "weekday": "Чт", "sleep": 6.7, "steps": 6900, "kcal": 1790, "protein": 125, "fat": 59, "carbs": 176}, {"date": "2026-10-16", "weekday": "Пт", "sleep": 8.4, "steps": 12100, "kcal": 2270, "protein": 163, "fat": 77, "carbs": 229}, {"date": "2026-10-17", "weekday": "Сб", "sleep": 7.3, "steps": 10300, "kcal": 2130, "protein": 152, "fat": 72, "carbs": 212}, {"date": "2026-10-18", "weekday": "Вс", "sleep": 7.7, "steps": 8200, "kcal": 1950, "protein": 140, "fat": 65, "carbs": 195}, {"date": "2026-10-19", "weekday": "Пн", "sleep": 8.0, "steps": 11500, "kcal": 2200, "protein": 157, "fat": 74, "carbs": 221}, {"date": "2026-10-20", "weekday": "Вт", "sleep": 6.6, "steps": 7000, "kcal": 1810, "protein": 127, "fat": 60, "carbs": 179}, {"date": "2026-11-01", "weekday": "Вс", "sleep": 8.1, "steps": 8400, "kcal": 1980, "protein": 142, "fat": 66, "carbs": 198}, {"date": "2026-11-02", "weekday": "Пн", "sleep": 7.4, "steps": 11200, "kcal": 2210, "protein": 158, "fat": 74, "carbs": 224}, {"date": "2026-11-03", "weekday": "Вт", "sleep": 6.8, "steps": 6500, "kcal": 1750, "protein": 121, "fat": 58, "carbs": 171}, {"date": "2026-11-04", "weekday": "Ср", "sleep": 7.9, "steps": 9800, "kcal": 2050, "protein": 149, "fat": 69, "carbs": 205}, {"date": "2026-11-05", "weekday": "Чт", "sleep": 8.3, "steps": 12500, "kcal": 2280, "protein": 165, "fat": 78, "carbs": 231}, {"date": "2026-11-06", "weekday": "Пт", "sleep": 6.5, "steps": 7200, "kcal": 1840, "protein": 130, "fat": 61, "carbs": 182}, {"date": "2026-11-07", "weekday": "Сб", "sleep": 7.6, "steps": 10100, "kcal": 2120, "protein": 151, "fat": 71, "carbs": 210}, {"date": "2026-11-08", "weekday": "Вс", "sleep": 8.0, "steps": 9300, "kcal": 1990, "protein": 144, "fat": 67, "carbs": 199}, {"date": "2026-11-09", "weekday": "Пн", "sleep": 7.2, "steps": 13100, "kcal": 2330, "protein": 168, "fat": 80, "carbs": 238}, {"date": "2026-11-10", "weekday": "Вт", "sleep": 6.9, "steps": 8800, "kcal": 1910, "protein": 138, "fat": 64, "carbs": 191}, {"date": "2026-11-11", "weekday": "Ср", "sleep": 7.8, "steps": 10600, "kcal": 2160, "protein": 154, "fat": 73, "carbs": 216}, {"date": "2026-11-12", "weekday": "Чт", "sleep": 8.2, "steps": 7600, "kcal": 1870, "protein": 133, "fat": 62, "carbs": 186}, {"date": "2026-11-13", "weekday": "Пт", "sleep": 7.1, "steps": 11800, "kcal": 2240, "protein": 160, "fat": 75, "carbs": 226}, {"date": "2026-11-14", "weekday": "Сб", "sleep": 7.5, "steps": 9000, "kcal": 2010, "protein": 146, "fat": 68, "carbs": 201}, {"date": "2026-11-15", "weekday": "Вс", "sleep": 6.7, "steps": 6900, "kcal": 1790, "protein": 125, "fat": 59, "carbs": 176}, {"date": "2026-11-16", "weekday": "Пн", "sleep": 8.4, "steps": 12100, "kcal": 2270, "protein": 163, "fat": 77, "carbs": 229}, {"date": "2026-11-17", "weekday": "Вт", "sleep": 7.3, "steps": 10300, "kcal": 2130, "protein": 152, "fat": 72, "carbs": 212}, {"date": "2026-11-18", "weekday": "Ср", "sleep": 7.7, "steps": 8200, "kcal": 1950, "protein": 140, "fat": 65, "carbs": 195}, {"date": "2026-11-19", "weekday": "Чт", "sleep": 8.0, "steps": 11500, "kcal": 2200, "protein": 157, "fat": 74, "carbs": 221}, {"date": "2026-11-20", "weekday": "Пт", "sleep": 6.6, "steps": 7000, "kcal": 1810, "protein": 127, "fat": 60, "carbs": 179}, {"date": "2026-11-21", "weekday": "Сб", "sleep": 7.9, "steps": 9600, "kcal": 2070, "protein": 148, "fat": 70, "carbs": 207}, {"date": "2026-11-22", "weekday": "Вс", "sleep": 7.4, "steps": 10900, "kcal": 2180, "protein": 156, "fat": 73, "carbs": 218}], "goals": {"steps": 10000, "sleep": 8, "kcal": 2000, "protein": 150, "fat": 70, "carbs": 200}, "weight": {"2026-09": {"start": 83.0, "end": 81.5}, "2026-10": {"start": 81.5, "end": 80.0}, "2026-11": {"start": 80.0, "end": 78.4}}, "settings": {"tdee": 2571, "fatKcal": 7700}, "updated": "демо-данные"};
+
+const METRICS = [
+  {key:'steps',   label:'Шаги',     unit:'',   fmt:v=>fmtN(v), lower:false},
+  {key:'sleep',   label:'Сон',      unit:' ч', fmt:v=>(+v).toFixed(1), lower:false},
+  {key:'kcal',    label:'Калории',  unit:'',   fmt:v=>fmtN(v), lower:true},
+  {key:'protein', label:'Белки',    unit:' г', fmt:v=>fmtN(v), lower:false},
+  {key:'fat',     label:'Жиры',     unit:' г', fmt:v=>fmtN(v), lower:true},
+  {key:'carbs',   label:'Углеводы', unit:' г', fmt:v=>fmtN(v), lower:true},
+];
+const MONTHS=['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+const DOW=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+const SCOPE_RU={week:'неделю',month:'месяц',year:'год'};
+const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+let STATE=null, charts=[], wChart=null, scope='month', period=null, authToken='';
+
+const fmtN=n=>Math.round(n).toLocaleString('ru-RU');
+const $=id=>document.getElementById(id);
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const pad=n=>String(n).padStart(2,'0');
+const iso2=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parseLocal=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);};
+const round2=n=>Math.round(n*100)/100;
+function monday(d){const x=new Date(d);const g=(x.getDay()+6)%7;x.setDate(x.getDate()-g);x.setHours(0,0,0,0);return x;}
+const FLAME='<svg class="fl" viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>';
+function streak(key,lower,goal,map,last){
+  if(!last)return 0;
+  let d=parseLocal(last),n=0;
+  while(true){const r=map[iso2(d)];if(!r||r[key]==null)break;
+    const hit=lower?r[key]<=goal:r[key]>=goal;if(!hit)break;
+    n++;d.setDate(d.getDate()-1);}
+  return n;
+}
+
+/* ---- загрузка ---- */
+function showLoader(){$('loader').classList.add('show');}
+function hideLoader(){$('loader').classList.remove('show');}
+function load(){ showLoader(); fetchData(d=>render(d)); }
+function fetchData(cb){
+  if(!SCRIPT_URL){cb(SAMPLE);return;}
+  const name='__hb'+Date.now();
+  const s=document.createElement('script');
+  const t=setTimeout(()=>{fail();cb(SAMPLE);},8000);
+  window[name]=d=>{clearTimeout(t);delete window[name];s.remove();
+    if(d&&d.ok===false){authFail();return;}
+    try{cb(d);}catch(e){fail();}};
+  s.onerror=()=>{clearTimeout(t);s.remove();fail();cb(SAMPLE);};
+  s.src=SCRIPT_URL+(SCRIPT_URL.includes('?')?'&':'?')+'callback='+name+'&token='+encodeURIComponent(authToken);
+  document.body.appendChild(s);
+}
+function fail(){const t=$('toast');t.textContent='Не вышло прочитать таблицу — показаны демо-данные. Проверь SCRIPT_URL и деплой.';t.style.display='block';setTimeout(()=>t.style.display='none',6000);}
+function updateSrc(){$('src').textContent=(STATE.updated&&STATE.updated!=='демо-данные')?('обновлено '+STATE.updated):'';}
+
+/* ---- пароль ---- */
+function getTok(){try{return localStorage.getItem('wrup_token')||'';}catch(e){return '';}}
+function setTok(v){try{localStorage.setItem('wrup_token',v);}catch(e){}}
+function delTok(){try{localStorage.removeItem('wrup_token');}catch(e){}}
+function showGate(msg){$('gateErr').textContent=msg||'';$('gate').classList.add('show');setTimeout(()=>{try{$('gatePass').focus();}catch(e){}},60);}
+function hideGate(){$('gate').classList.remove('show');}
+function authFail(){hideLoader();delTok();authToken='';const b=$('refreshBtn');if(b)b.classList.remove('spin');showGate('Неверный пароль');}
+
+/* ---- запись веса ---- */
+function openWeight(){
+  const w=(STATE.weight||{})[period]||{};
+  $('wmMonth').textContent=$('periodSel').selectedOptions[0]?$('periodSel').selectedOptions[0].textContent:'';
+  $('wmStart').value=(w.start!=null)?w.start:'';
+  $('wmEnd').value=(w.end!=null)?w.end:'';
+  $('wmErr').textContent='';$('wmSave').disabled=false;
+  $('wModal').classList.add('show');
+  setTimeout(()=>{try{$('wmStart').focus();}catch(e){}},60);
+}
+function closeWeight(){$('wModal').classList.remove('show');}
+function saveWeight(start,end){
+  const month=period; if(!month)return;
+  if(!SCRIPT_URL){
+    STATE.weight=STATE.weight||{};
+    if(start===''&&end==='')delete STATE.weight[month];
+    else STATE.weight[month]={start:start===''?null:+start,end:end===''?null:+end};
+    closeWeight();setScope(scope,period);return;
+  }
+  $('wmSave').disabled=true;$('wmErr').textContent='Сохранение…';
+  postWeight(month,start,end,ok=>{
+    if(ok){closeWeight();refresh();}
+    else{$('wmSave').disabled=false;$('wmErr').textContent='Не удалось сохранить — проверь связь/пароль.';}
+  });
+}
+function postWeight(month,start,end,done){
+  const name='__hw'+Date.now();
+  const s=document.createElement('script');
+  const t=setTimeout(()=>{s.remove();done(false);},9000);
+  window[name]=d=>{clearTimeout(t);delete window[name];s.remove();done(!!(d&&d.ok));};
+  s.onerror=()=>{clearTimeout(t);s.remove();done(false);};
+  s.src=SCRIPT_URL+(SCRIPT_URL.includes('?')?'&':'?')+'action=weight&callback='+name
+    +'&token='+encodeURIComponent(authToken)+'&month='+encodeURIComponent(month)
+    +'&start='+encodeURIComponent(start)+'&end='+encodeURIComponent(end);
+  document.body.appendChild(s);
+}
+
+/* ---- редактирование целей ---- */
+function openGoals(){
+  const g=STATE.goals||{};
+  $('gSteps').value=g.steps!=null?g.steps:'';
+  $('gSleep').value=g.sleep!=null?g.sleep:'';
+  $('gKcal').value=g.kcal!=null?g.kcal:'';
+  $('gProtein').value=g.protein!=null?g.protein:'';
+  $('gFat').value=g.fat!=null?g.fat:'';
+  $('gCarbs').value=g.carbs!=null?g.carbs:'';
+  $('gErr').textContent='';$('gSave').disabled=false;
+  $('gModal').classList.add('show');
+}
+function closeGoals(){$('gModal').classList.remove('show');}
+function saveGoals(){
+  const v={steps:$('gSteps').value.trim(),sleep:$('gSleep').value.trim(),kcal:$('gKcal').value.trim(),
+    protein:$('gProtein').value.trim(),fat:$('gFat').value.trim(),carbs:$('gCarbs').value.trim()};
+  if(!SCRIPT_URL){
+    STATE.goals=STATE.goals||{};
+    Object.keys(v).forEach(k=>{if(v[k]!=='')STATE.goals[k]=+v[k];});
+    closeGoals();setScope(scope,period);return;
+  }
+  $('gSave').disabled=true;$('gErr').textContent='Сохранение…';
+  postGoals(v,ok=>{if(ok){closeGoals();refresh();}else{$('gSave').disabled=false;$('gErr').textContent='Не удалось сохранить — проверь связь/пароль.';}});
+}
+function postGoals(v,done){
+  const name='__hg'+Date.now();const s=document.createElement('script');
+  const t=setTimeout(()=>{s.remove();done(false);},9000);
+  window[name]=d=>{clearTimeout(t);delete window[name];s.remove();done(!!(d&&d.ok));};
+  s.onerror=()=>{clearTimeout(t);s.remove();done(false);};
+  s.src=SCRIPT_URL+(SCRIPT_URL.includes('?')?'&':'?')+'action=goals&callback='+name+'&token='+encodeURIComponent(authToken)
+    +'&steps='+encodeURIComponent(v.steps)+'&sleep='+encodeURIComponent(v.sleep)+'&kcal='+encodeURIComponent(v.kcal)
+    +'&protein='+encodeURIComponent(v.protein)+'&fat='+encodeURIComponent(v.fat)+'&carbs='+encodeURIComponent(v.carbs);
+  document.body.appendChild(s);
+}
+
+/* ---- общий рендер ---- */
+function render(data){
+  hideLoader();
+  STATE=data; updateSrc();
+  document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>setScope(b.dataset.scope));
+  $('refreshBtn').onclick=()=>{$('fabwrap').classList.remove('open');refresh();};
+  setScope('month');
+}
+function refresh(){
+  const b=$('refreshBtn'); b.classList.add('spin');
+  fetchData(d=>{STATE=d; updateSrc(); setScope(scope, period); setTimeout(()=>b.classList.remove('spin'),300);});
+}
+
+function setScope(s, keep){
+  scope=s;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.scope===s));
+  if(s==='weight'){$('dashView').style.display='none';$('weightView').style.display='block';$('pickWrap').style.display='none';$('hTitle').textContent='Тренд веса';drawWeight();return;}
+  $('dashView').style.display='block';$('weightView').style.display='none';$('pickWrap').style.display='';
+  const ps=periods(s);
+  const sel=$('periodSel');sel.innerHTML='';
+  ps.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.label;sel.appendChild(o);});
+  period=(keep&&ps.some(p=>p.id===keep))?keep:(ps.length?ps[0].id:null);
+  sel.value=period;
+  sel.onchange=()=>{period=sel.value;drawScope();};
+  drawScope();
+}
+
+function periods(s){
+  if(s==='month'){
+    const set=new Set(STATE.log.map(r=>r.date.slice(0,7)));
+    Object.keys(STATE.weight||{}).forEach(m=>{const w=STATE.weight[m];if(w&&(w.start!=null||w.end!=null))set.add(m);});
+    return [...set].sort().reverse().map(m=>{const[y,mm]=m.split('-');return{id:m,label:cap(MONTHS[+mm-1])+' '+y};});
+  }
+  if(s==='year'){
+    return [...new Set(STATE.log.map(r=>r.date.slice(0,4)))].sort().reverse().map(y=>({id:y,label:y+' год'}));
+  }
+  // week
+  const m=new Map();
+  STATE.log.forEach(r=>{const mon=monday(parseLocal(r.date));m.set(iso2(mon),mon);});
+  return [...m.keys()].sort().reverse().map(id=>{
+    const a=m.get(id),b=new Date(a);b.setDate(b.getDate()+6);
+    const f=d=>d.getDate()+' '+MONTHS[d.getMonth()].slice(0,3);
+    return{id,label:f(a)+' – '+f(b)};
+  });
+}
+
+function dailyRows(){
+  if(scope==='week'){const a=parseLocal(period),b=new Date(a);b.setDate(b.getDate()+6);
+    const A=iso2(a),B=iso2(b);return STATE.log.filter(r=>r.date>=A&&r.date<=B);}
+  if(scope==='year')return STATE.log.filter(r=>r.date.slice(0,4)===period);
+  return STATE.log.filter(r=>r.date.slice(0,7)===period);
+}
+
+function points(){
+  if(scope==='year'){
+    return [...Array(12)].map((_,i)=>{
+      const mm=period+'-'+pad(i+1);
+      const rows=STATE.log.filter(r=>r.date.slice(0,7)===mm);
+      const v={};METRICS.forEach(m=>{const a=rows.filter(r=>r[m.key]!=null).map(r=>r[m.key]);
+        v[m.key]=a.length?a.reduce((x,y)=>x+y,0)/a.length:null;});
+      return{label:cap(MONTHS[i]).slice(0,3),values:v};
+    });
+  }
+  let days;
+  if(scope==='week'){const a=parseLocal(period);days=[...Array(7)].map((_,i)=>{const d=new Date(a);d.setDate(d.getDate()+i);return d;});}
+  else{const[y,mm]=period.split('-').map(Number);const dim=new Date(y,mm,0).getDate();days=[...Array(dim)].map((_,i)=>new Date(y,mm-1,i+1));}
+  const map={};STATE.log.forEach(r=>map[r.date]=r);
+  return days.map((d,i)=>{const r=map[iso2(d)];const v={};
+    METRICS.forEach(m=>v[m.key]=(r&&r[m.key]!=null)?r[m.key]:null);
+    return{label:scope==='week'?DOW[i]:String(d.getDate()),values:v};});
+}
+
+function weightForScope(){
+  if(scope==='month'){const w=(STATE.weight||{})[period];return(w&&w.start!=null&&w.end!=null)?w:null;}
+  if(scope==='year'){const ms=Object.keys(STATE.weight||{}).filter(m=>m.slice(0,4)===period&&STATE.weight[m].start!=null&&STATE.weight[m].end!=null).sort();
+    return ms.length?{start:STATE.weight[ms[0]].start,end:STATE.weight[ms[ms.length-1]].end}:null;}
+  return null;
+}
+
+function drawScope(){
+  const rows=dailyRows(),pts=points(),set=STATE.settings,g=STATE.goals;
+  $('hTitle').textContent=$('periodSel').selectedOptions[0]?$('periodSel').selectedOptions[0].textContent:'';
+  $('defLab').textContent='Дефицит за '+SCOPE_RU[scope];
+  $('wAdd').classList.toggle('show',scope==='month');
+  $('gridSec').textContent='метрики · '+SCOPE_RU[scope].replace('неделю','неделя').replace('месяц','месяц').replace('год','год')+' · факт против цели';
+
+  const eat=rows.filter(r=>r.kcal!=null),days=eat.length;
+  const eaten=eat.reduce((s,r)=>s+r.kcal,0),norm=set.tdee*days,deficit=eaten-norm;
+  const kgCalc=set.fatKcal?(-deficit/set.fatKcal):0;
+  const dv=$('defVal');dv.className='deficit num '+(deficit<=0?'cut':'surp');
+  animateNum(dv,deficit,v=>(v<=0?'−':'+')+fmtN(Math.abs(v))+' <small>ккал</small>');
+  $('kgCalc').textContent=(kgCalc>=0?'−':'+')+Math.abs(kgCalc).toFixed(2)+' кг';
+  const scale=Math.max(norm,eaten)*1.06||1;
+  setTimeout(()=>{$('fill').style.width=(eaten/scale*100)+'%';$('marker').style.left=(norm/scale*100)+'%';},60);
+  $('lgEaten').textContent=fmtN(eaten);$('lgNorm').textContent=fmtN(norm);$('lgDays').textContent=days;
+  $('kEaten').textContent=fmtN(eaten);$('kNorm').textContent=fmtN(norm);
+
+  const w=weightForScope();
+  const wFact=w?(w.start-w.end):null;
+  $('kWfact').textContent=wFact==null?'—':(wFact>=0?'−':'+')+Math.abs(wFact).toFixed(1)+' кг';
+  $('kWfactSub').textContent=w?(w.start.toFixed(1)+' → '+w.end.toFixed(1)):(scope==='week'?'вес считается за месяц':'впиши вес в таблице');
+  const diff=wFact==null?null:(wFact-kgCalc);
+  $('kDiff').textContent=diff==null?'—':(diff>=0?'+':'−')+Math.abs(diff).toFixed(2)+' кг';
+  $('kDiff').classList.toggle('gold',diff!=null);
+
+  charts.forEach(c=>c.destroy());charts=[];
+  const grid=$('grid');grid.innerHTML='';
+  const labels=pts.map(p=>p.label);
+  const tipKind=scope==='month'?'День ':(scope==='year'?'':'');
+  const allMap={}; STATE.log.forEach(r=>allMap[r.date]=r);
+  const lastDate=STATE.log.reduce((mx,r)=>r.date>mx?r.date:mx,'');
+  METRICS.forEach(m=>{
+    const goal=g[m.key];
+    const act=pts.map(p=>p.values[m.key]);
+    const pres=rows.filter(r=>r[m.key]!=null).map(r=>r[m.key]);
+    const avg=pres.length?pres.reduce((a,b)=>a+b,0)/pres.length:0;
+    const hit=m.lower?avg<=goal:avg>=goal;
+    const stk=streak(m.key,m.lower,goal,allMap,lastDate);
+    const card=document.createElement('div');card.className='card';
+    card.innerHTML='<div class="chead"><span class="ctitle">'+m.label+'</span>'+
+      '<span class="cnow num">'+(pres.length?m.fmt(avg):'—')+m.unit+'</span>'+
+      '<span class="streak'+(stk>0?' on':'')+'" title="дней подряд в цели">'+FLAME+stk+'</span>'+
+      '<span class="cgoal num">цель '+m.fmt(goal)+m.unit+'</span></div>'+
+      '<div class="cbody"><canvas></canvas></div>'+
+      '<div class="cfoot"><span>среднее за '+SCOPE_RU[scope]+'</span>'+
+      '<span class="'+(hit?'hit':'miss')+'">'+(hit?'в цели':(m.lower?'выше цели':'ниже цели'))+'</span></div>';
+    grid.appendChild(card);
+    const ctx=card.querySelector('canvas').getContext('2d');
+    const grad=ctx.createLinearGradient(0,0,0,132);
+    grad.addColorStop(0,'rgba(255,122,69,.22)');grad.addColorStop(1,'rgba(255,122,69,0)');
+    charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[
+      {data:act,borderColor:'#FF7A45',backgroundColor:grad,borderWidth:2,fill:true,tension:.35,
+       spanGaps:false,pointRadius:0,pointHoverRadius:4,pointHoverBackgroundColor:'#FF7A45'},
+      {data:labels.map(()=>goal),borderColor:'#46C9BC',borderWidth:1.5,borderDash:[5,4],fill:false,pointRadius:0,pointHoverRadius:0}
+    ]},options:lineOpts(m,tipKind)}));
+  });
+}
+
+function drawWeight(){
+  const ms=Object.keys(STATE.weight||{}).filter(m=>{const w=STATE.weight[m];return w.start!=null&&w.end!=null;}).sort();
+  const labels=['старт'].concat(ms.map(m=>{const[y,mm]=m.split('-');return cap(MONTHS[+mm-1]).slice(0,3)+' '+y.slice(2);}));
+  const start=ms.length?STATE.weight[ms[0]].start:null;
+  const actual=[start].concat(ms.map(m=>STATE.weight[m].end));
+  let cum=start;const predicted=[start].concat(ms.map(m=>{cum-=monthKgCalc(m);return round2(cum);}));
+  const last=ms.length?STATE.weight[ms[ms.length-1]].end:null;
+  const totFact=(start!=null&&last!=null)?start-last:null;
+  const totCalc=ms.reduce((s,m)=>s+monthKgCalc(m),0);
+  const diff=totFact==null?null:totFact-totCalc;
+  $('wCur').textContent=last==null?'—':last.toFixed(1)+' кг';
+  $('wFact').textContent=totFact==null?'—':(totFact>=0?'−':'+')+Math.abs(totFact).toFixed(1)+' кг';
+  $('wCalc').textContent=(totCalc>=0?'−':'+')+Math.abs(totCalc).toFixed(2)+' кг';
+  $('wDiff').textContent=diff==null?'—':(diff>=0?'+':'−')+Math.abs(diff).toFixed(2)+' кг';
+
+  if(wChart)wChart.destroy();
+  const ctx=$('weightCanvas').getContext('2d');
+  const grad=ctx.createLinearGradient(0,0,0,300);
+  grad.addColorStop(0,'rgba(232,194,90,.20)');grad.addColorStop(1,'rgba(232,194,90,0)');
+  wChart=new Chart(ctx,{type:'line',data:{labels,datasets:[
+    {label:'факт',data:actual,borderColor:'#E8C25A',backgroundColor:grad,borderWidth:2.5,fill:true,tension:.3,
+     pointRadius:3,pointBackgroundColor:'#E8C25A',pointHoverRadius:5},
+    {label:'расчёт',data:predicted,borderColor:'#46C9BC',borderWidth:1.5,borderDash:[5,4],fill:false,
+     tension:.3,pointRadius:0,pointHoverRadius:0}
+  ]},options:{
+    responsive:true,maintainAspectRatio:false,animation:reduce?false:{duration:800},
+    interaction:{intersect:false,mode:'index'},
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'#1C232B',borderColor:'#262F39',borderWidth:1,
+      titleColor:'#7E8C9A',bodyColor:'#E8EDF2',bodyFont:{family:'Space Mono'},titleFont:{family:'Space Grotesk'},
+      padding:10,displayColors:true,callbacks:{label:it=>(it.datasetIndex?'расчёт: ':'факт: ')+(it.parsed.y==null?'—':it.parsed.y.toFixed(1)+' кг')}}},
+    scales:{x:{grid:{display:false},ticks:{color:'#566270',font:{family:'Space Mono',size:10}}},
+      y:{grid:{color:'#1E252D'},border:{display:false},ticks:{color:'#566270',font:{family:'Space Mono',size:10},
+        callback:v=>v+' кг'}}}
+  }});
+}
+
+function monthKgCalc(m){
+  const rows=STATE.log.filter(r=>r.date.slice(0,7)===m&&r.kcal!=null);
+  const eaten=rows.reduce((s,r)=>s+r.kcal,0),norm=STATE.settings.tdee*rows.length;
+  return STATE.settings.fatKcal?(-(eaten-norm)/STATE.settings.fatKcal):0;
+}
+
+function lineOpts(m,tipKind){
+  return{responsive:true,maintainAspectRatio:false,animation:reduce?false:{duration:700},
+    interaction:{intersect:false,mode:'index'},
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'#1C232B',borderColor:'#262F39',borderWidth:1,
+      titleColor:'#7E8C9A',bodyColor:'#E8EDF2',bodyFont:{family:'Space Mono'},titleFont:{family:'Space Grotesk'},
+      padding:10,displayColors:false,callbacks:{title:it=>tipKind+it[0].label,
+        label:it=>(it.datasetIndex?'цель: ':'факт: ')+(it.parsed.y==null?'—':m.fmt(it.parsed.y)+m.unit)}}},
+    scales:{x:{grid:{display:false},ticks:{color:'#566270',font:{family:'Space Mono',size:9},maxTicksLimit:8}},
+      y:{grid:{color:'#1E252D'},border:{display:false},ticks:{color:'#566270',font:{family:'Space Mono',size:9},maxTicksLimit:4}}}};
+}
+
+function animateNum(el,target,fmt){
+  if(reduce){el.innerHTML=fmt(target);return;}
+  const dur=750,t0=performance.now();
+  (function step(t){const p=Math.min((t-t0)/dur,1);const e=1-Math.pow(1-p,3);
+    el.innerHTML=fmt(target*e);if(p<1)requestAnimationFrame(step);})(t0);
+}
+
+document.addEventListener('click',e=>{if(!e.target.closest('#fabwrap'))$('fabwrap').classList.remove('open');if(e.target&&e.target.tagName==='CANVAS')return;clearTips();});
+function clearTips(){[...charts,wChart].forEach(c=>{if(!c)return;c.setActiveElements([]);if(c.tooltip)c.tooltip.setActiveElements([],{x:0,y:0});c.update();});}
+
+$('gateBtn').onclick=()=>{const v=$('gatePass').value.trim();if(!v)return;authToken=v;setTok(v);hideGate();load();};
+$('gatePass').addEventListener('keydown',e=>{if(e.key==='Enter')$('gateBtn').click();});
+
+$('wAdd').onclick=openWeight;
+$('wmCancel').onclick=closeWeight;
+$('wmSave').onclick=()=>saveWeight($('wmStart').value.trim(),$('wmEnd').value.trim());
+$('wmRemove').onclick=()=>saveWeight('','');
+$('wModal').onclick=e=>{if(e.target===$('wModal'))closeWeight();};
+
+$('fabToggle').onclick=()=>$('fabwrap').classList.toggle('open');
+$('goalsBtn').onclick=()=>{$('fabwrap').classList.remove('open');openGoals();};
+$('gCancel').onclick=closeGoals;
+$('gSave').onclick=saveGoals;
+$('gModal').onclick=e=>{if(e.target===$('gModal'))closeGoals();};
+
+boot();
+function boot(){
+  if(!SCRIPT_URL){render(SAMPLE);return;}
+  authToken=getTok();
+  if(authToken)load(); else {hideLoader();showGate();}
+}
+</script>
+</body>
+</html>
