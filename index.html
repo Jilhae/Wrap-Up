@@ -173,6 +173,27 @@
   .streak.t2 .fl{filter:drop-shadow(0 0 6px rgba(255,165,82,.7))}
   .streak.t3{color:var(--gold)}
   .streak.t3 .fl{filter:drop-shadow(0 0 8px rgba(232,194,90,.85))}
+
+  .goal-grid select{width:100%;background:var(--elev);border:1px solid var(--line);border-radius:11px;color:var(--tx);font-family:var(--mono);font-size:15px;padding:10px 12px;-webkit-appearance:none;appearance:none}
+  .seg{display:flex;gap:6px;background:var(--elev);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:14px}
+  .seg button{flex:1;background:none;border:none;color:var(--muted);font-family:var(--disp);font-weight:600;font-size:13px;padding:9px 6px;border-radius:9px;cursor:pointer}
+  .seg button.on{background:var(--actual);color:#11151a}
+  .calc-out{margin:8px 0 2px;min-height:30px}
+  .co-big{font-family:var(--mono);font-weight:700;font-size:30px;color:var(--good);line-height:1}
+  .co-big small{font-size:.42em;color:var(--muted);font-weight:400}
+  .co-sub{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:6px}
+  .co-macros{display:flex;gap:16px;margin-top:10px;font-family:var(--mono);font-size:13px;font-weight:700}
+
+  .aw{display:flex;align-items:center;gap:22px}
+  .aw-rings{width:118px;height:118px;flex-shrink:0}
+  .aw-rings .awp{transition:stroke-dashoffset .95s cubic-bezier(.22,1,.36,1)}
+  .donut .dseg{transition:stroke-dasharray .95s cubic-bezier(.22,1,.36,1)}
+  .aw-legend{display:flex;flex-direction:column;gap:13px;flex:1;min-width:0}
+  .awl{display:flex;align-items:center;gap:9px;font-size:13px}
+  .awl .dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+  .awl-n{color:var(--muted)}
+  .awl-v{margin-left:auto;font-family:var(--mono);font-weight:700}
+  #tdEmpty{justify-content:center}
   .kpi .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
   .kpi .v{font-family:var(--mono);font-weight:700;font-size:24px;margin-top:9px;letter-spacing:-.01em}
   .kpi .sub{font-family:var(--mono);font-size:12px;color:var(--faint);margin-top:3px}
@@ -236,14 +257,16 @@
     <button class="tab" data-scope="week">Неделя</button>
     <button class="tab on" data-scope="month">Месяц</button>
     <button class="tab" data-scope="year">Год</button>
-    <button class="tab" data-scope="macros">Макросы</button>
     <button class="tab" data-scope="weight">Тренд веса</button>
   </div>
 
   <div id="dashView">
     <div class="today" id="todayCard" style="display:none">
       <div class="today-head"><span class="t">Сегодня · <span id="tdDate"></span></span><span class="s" id="tdSummary"></span></div>
-      <div class="rings" id="tdRings"></div>
+      <div class="aw" id="tdRings">
+        <svg class="aw-rings" id="awSvg" viewBox="0 0 120 120"></svg>
+        <div class="aw-legend" id="awLegend"></div>
+      </div>
       <div class="today-empty" id="tdEmpty" style="display:none">Нет записи за сегодня</div>
     </div>
     <section class="hero">
@@ -281,6 +304,22 @@
 
     <div class="sec" id="gridSec">метрики месяца · факт против цели</div>
     <div class="grid" id="grid"></div>
+
+    <div id="macrosBlock" style="display:none">
+      <div class="sec" id="mSec" style="margin-top:26px">макросы · средние за месяц</div>
+      <section class="wcard">
+        <div class="macros-top">
+          <div class="donut" id="mDonut"></div>
+          <div class="macros-legend" id="mLegend"></div>
+        </div>
+      </section>
+      <div class="kpis">
+        <div class="kpi"><div class="k">Белок на кг</div><div class="v num gold" id="mPerKg">—</div><div class="sub" id="mPerKgSub">г/кг веса</div></div>
+        <div class="kpi"><div class="k">Ккал из макросов</div><div class="v num" id="mKcal">—</div><div class="sub" id="mKcalSub">4·Б + 9·Ж + 4·У</div></div>
+      </div>
+      <div class="sec">факт против цели</div>
+      <div id="mBars"></div>
+    </div>
   </div>
 
   <div id="weightView" style="display:none">
@@ -301,22 +340,6 @@
     </div>
   </div>
 
-  <div id="macrosView" style="display:none">
-    <section class="wcard">
-      <div class="lab">Макросы · средние за месяц</div>
-      <div class="macros-top">
-        <div class="donut" id="mDonut"></div>
-        <div class="macros-legend" id="mLegend"></div>
-      </div>
-    </section>
-    <div class="kpis">
-      <div class="kpi"><div class="k">Белок на кг</div><div class="v num gold" id="mPerKg">—</div><div class="sub" id="mPerKgSub">г/кг веса</div></div>
-      <div class="kpi"><div class="k">Ккал из макросов</div><div class="v num" id="mKcal">—</div><div class="sub" id="mKcalSub">4·Б + 9·Ж + 4·У</div></div>
-    </div>
-    <div class="sec">факт против цели</div>
-    <div id="mBars"></div>
-  </div>
-
   <footer>made by <a href="https://t.me/jilhae1">@jilhae1</a></footer>
 </div>
 <div class="loader show" id="loader">
@@ -334,6 +357,9 @@
 
 <div class="fabwrap" id="fabwrap">
   <div class="fab-menu" id="fabMenu">
+    <button class="fab-act" id="calcBtn" aria-label="Калькулятор калорий">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="18"/><line x1="8" y1="18" x2="12" y2="18"/></svg>
+    </button>
     <button class="fab-act" id="dayBtn" aria-label="Запись за день">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M21 13V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7"/><path d="M3 10h18M16 19h6M19 16v6"/></svg>
     </button>
@@ -416,6 +442,34 @@
   </div>
 </div>
 
+<div class="modal" id="cModal">
+  <div class="modal-box">
+    <div class="modal-title">Калькулятор калорий</div>
+    <div class="seg" id="cSex"><button data-v="m" class="on">Мужчина</button><button data-v="f">Женщина</button></div>
+    <div class="goal-grid">
+      <div><label>Вес, кг</label><input id="cW" type="number" inputmode="decimal" step="0.1"></div>
+      <div><label>Рост, см</label><input id="cH" type="number" inputmode="numeric"></div>
+      <div><label>Возраст</label><input id="cA" type="number" inputmode="numeric"></div>
+      <div><label>Активность</label><select id="cAct">
+        <option value="1.2">Минимальная</option>
+        <option value="1.375">Лёгкая</option>
+        <option value="1.55" selected>Средняя</option>
+        <option value="1.725">Высокая</option>
+        <option value="1.9">Очень высокая</option>
+      </select></div>
+    </div>
+    <div class="seg" id="cMode"><button data-v="deficit" class="on">Дефицит</button><button data-v="maintenance">Поддержание</button><button data-v="surplus">Профицит</button></div>
+    <label id="cPctLab">Дефицит, % (5–30)</label>
+    <input id="cPct" type="number" inputmode="numeric" value="15" min="5" max="30">
+    <div class="calc-out" id="cOut"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="cCancel">Закрыть</button>
+      <button class="btn-primary" id="cApply" disabled>Применить как цели</button>
+    </div>
+    <div class="modal-err" id="cErr"></div>
+  </div>
+</div>
+
 <script>
 /* ====== НАСТРОЙКА: вставь сюда URL веб-приложения Apps Script (тот же, что .../exec) ====== */
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygGwPe9GMIYC7Eav_8DQ1Hk0yBSMNzYM26RNGLvyFsKC67O0keeLuSj-6bX2kcdf74Lg/exec";
@@ -446,11 +500,20 @@ const parseLocal=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1
 const round2=n=>Math.round(n*100)/100;
 function monday(d){const x=new Date(d);const g=(x.getDay()+6)%7;x.setDate(x.getDate()-g);x.setHours(0,0,0,0);return x;}
 const FLAME='<svg class="fl" viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>';
+function isHit(key,lower,v,goal){
+  if(key==='kcal'){
+    const m=(STATE.settings&&STATE.settings.mode)||'deficit';
+    if(m==='surplus')return v>=goal;
+    if(m==='maintenance')return Math.abs(v-goal)<=goal*0.05;
+    return v<=goal;
+  }
+  return lower?v<=goal:v>=goal;
+}
 function streak(key,lower,goal,map,last){
   if(!last)return 0;
   let d=parseLocal(last),n=0;
   while(true){const r=map[iso2(d)];if(!r||r[key]==null)break;
-    const hit=lower?r[key]<=goal:r[key]>=goal;if(!hit)break;
+    if(!isHit(key,lower,r[key],goal))break;
     n++;d.setDate(d.getDate()-1);}
   return n;
 }
@@ -553,15 +616,15 @@ function postGoals(v,done){
   s.src=SCRIPT_URL+(SCRIPT_URL.includes('?')?'&':'?')+'action=goals&callback='+name+'&token='+encodeURIComponent(authToken)
     +'&steps='+encodeURIComponent(v.steps)+'&sleep='+encodeURIComponent(v.sleep)+'&kcal='+encodeURIComponent(v.kcal)
     +'&protein='+encodeURIComponent(v.protein)+'&fat='+encodeURIComponent(v.fat)+'&carbs='+encodeURIComponent(v.carbs)
-    +'&target='+encodeURIComponent(v.target);
+    +'&target='+encodeURIComponent(v.target||'')+'&tdee='+encodeURIComponent(v.tdee||'')+'&mode='+encodeURIComponent(v.mode||'');
   document.body.appendChild(s);
 }
 
-/* ---- карточка «Сегодня» ---- */
-function ring(pct,col){
-  const r=20,c=2*Math.PI*r,off=c*(1-Math.max(0,Math.min(1,pct/100)));
-  return '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="'+r+'" fill="none" stroke="var(--hair)" stroke-width="5"/>'
-    +'<circle cx="24" cy="24" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="5" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'" transform="rotate(-90 24 24)"/></svg>';
+/* ---- карточка «Сегодня» (кольца Apple Watch) ---- */
+function awRing(R,ratio,col){
+  const c=2*Math.PI*R;
+  return '<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="'+col+'" stroke-opacity="0.18" stroke-width="9"/>'
+    +'<circle class="awp" cx="60" cy="60" r="'+R+'" fill="none" stroke="'+col+'" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+c+'" data-off="'+(c*(1-Math.max(0,Math.min(1,ratio))))+'" transform="rotate(-90 60 60)"/>';
 }
 function renderToday(){
   const card=$('todayCard');
@@ -571,18 +634,28 @@ function renderToday(){
   card.style.display='block';
   $('tdDate').textContent=now.getDate()+' '+MONTHS[now.getMonth()].slice(0,3);
   const r=(STATE.log||[]).find(x=>x.date===iso2(now));
-  const rings=$('tdRings'),empty=$('tdEmpty');
-  if(!r){rings.style.display='none';empty.style.display='block';$('tdSummary').textContent='';return;}
-  rings.style.display='';empty.style.display='none';
-  let hits=0;
-  rings.innerHTML=METRICS.map(m=>{
-    const v=r[m.key],goal=STATE.goals[m.key],has=v!=null;
-    const hit=has&&(m.lower?v<=goal:v>=goal);if(hit)hits++;
-    const ratio=(has&&goal)?Math.min(v/goal,1)*100:0;
-    const col=hit?'var(--good)':(has?'var(--actual)':'var(--faint)');
-    return '<div class="ring">'+ring(ratio,col)+'<div class="rv" style="color:'+col+'">'+(has?m.fmt(v):'—')+'</div><div class="rl">'+m.label+'</div></div>';
-  }).join('');
-  $('tdSummary').textContent=hits+' из 6 в цели';
+  if(!r){$('tdRings').style.display='none';$('tdEmpty').style.display='flex';$('tdSummary').textContent='';return;}
+  $('tdRings').style.display='flex';$('tdEmpty').style.display='none';
+  const g=STATE.goals;
+  const items=[{key:'steps',label:'Шаги',col:'#93E05A',R:46},{key:'kcal',label:'Калории',col:'#FF7A45',R:34},{key:'sleep',label:'Сон',col:'#46C9BC',R:22}];
+  let hits=0,svg='',leg='';
+  items.forEach(it=>{
+    const m=METRICS.find(x=>x.key===it.key);
+    const v=r[it.key],goal=g[it.key],has=v!=null;
+    const hit=has&&isHit(it.key,m.lower,v,goal);if(hit)hits++;
+    const ratio=(has&&goal)?Math.min(v/goal,1):0;
+    svg+=awRing(it.R,ratio,it.col);
+    leg+='<div class="awl"><span class="dot" style="background:'+it.col+'"></span><span class="awl-n">'+it.label+'</span>'
+      +'<span class="awl-v" style="color:'+(hit?'var(--good)':it.col)+'">'+(has?m.fmt(v)+m.unit:'—')+(hit?' ✓':'')+'</span></div>';
+  });
+  $('awSvg').innerHTML=svg;$('awLegend').innerHTML=leg;
+  $('tdSummary').textContent=hits+' из 3 в цели';
+  animateStroke('.awp','off','strokeDashoffset');
+}
+function animateStroke(sel,attr,prop){
+  const els=document.querySelectorAll(sel);
+  if(reduce){els.forEach(c=>c.style[prop]=c.dataset[attr]);return;}
+  setTimeout(()=>{els.forEach(c=>{c.style[prop]=c.dataset[attr];});},40);
 }
 
 /* ---- макросы ---- */
@@ -593,7 +666,7 @@ function latestWeight(){
 function donut(segs){
   const r=42,c=2*Math.PI*r;let off=0,s='';
   segs.forEach(seg=>{const len=seg[0]*c;
-    s+='<circle cx="60" cy="60" r="'+r+'" fill="none" stroke="'+seg[1]+'" stroke-width="16" stroke-dasharray="'+len+' '+(c-len)+'" stroke-dashoffset="'+(-off)+'" transform="rotate(-90 60 60)"/>';
+    s+='<circle class="dseg" cx="60" cy="60" r="'+r+'" fill="none" stroke="'+seg[1]+'" stroke-width="16" stroke-dasharray="0 '+c+'" data-da="'+len+' '+(c-len)+'" stroke-dashoffset="'+(-off)+'" transform="rotate(-90 60 60)"/>';
     off+=len;});
   return '<svg viewBox="0 0 120 120">'+s+'</svg>';
 }
@@ -603,12 +676,14 @@ function mbar(name,val,goal,col){
     +'<div class="mbar-track"><div class="mbar-fill" style="width:'+(val/scale*100)+'%;background:'+col+'"></div><div class="mbar-mark" style="left:'+(goal/scale*100)+'%"></div></div></div>';
 }
 function drawMacros(){
-  const rows=STATE.log.filter(r=>r.date.slice(0,7)===period),g=STATE.goals;
-  $('hTitle').textContent=$('periodSel').selectedOptions[0]?$('periodSel').selectedOptions[0].textContent:'';
+  const rows=(scope==='week')?dailyRows():STATE.log.filter(r=>r.date.slice(0,7)===period);
+  const g=STATE.goals;
+  $('mSec').textContent='макросы · средние за '+(scope==='week'?'неделю':'месяц');
   const avg=k=>{const a=rows.filter(r=>r[k]!=null).map(r=>r[k]);return a.length?a.reduce((x,y)=>x+y,0)/a.length:0;};
   const P=avg('protein'),F=avg('fat'),Cb=avg('carbs');
   const kP=P*4,kF=F*9,kC=Cb*4,kTot=(kP+kF+kC)||1;
   $('mDonut').innerHTML=donut([[kP/kTot,'#FF7A45'],[kF/kTot,'#E8C25A'],[kC/kTot,'#46C9BC']]);
+  animateStroke('.dseg','da','strokeDasharray');
   $('mLegend').innerHTML=[['Белки','#FF7A45',P,kP],['Жиры','#E8C25A',F,kF],['Углеводы','#46C9BC',Cb,kC]]
     .map(it=>'<div class="ml-row"><span class="dot" style="background:'+it[1]+'"></span><span class="nm">'+it[0]+'</span><b>'+Math.round(it[2])+' г</b><span class="pc">'+Math.round(it[3]/kTot*100)+'%</span></div>').join('');
   const w=latestWeight();
@@ -665,6 +740,57 @@ function postDay(p,done){
   document.body.appendChild(s);
 }
 
+/* ---- калькулятор калорий ---- */
+function getSeg(id){const b=$(id).querySelector('button.on');return b?b.dataset.v:null;}
+function bindSeg(id,cb){$(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{$(id).querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');cb&&cb();});}
+function calcCompute(){
+  const sex=getSeg('cSex'),mode=getSeg('cMode');
+  const w=+$('cW').value,h=+$('cH').value,a=+$('cA').value,act=+$('cAct').value;
+  if(!w||!h||!a)return null;
+  const bmr=10*w+6.25*h-5*a+(sex==='m'?5:-161);
+  const maint=bmr*act;
+  const pct=Math.max(5,Math.min(30,+$('cPct').value||0));
+  let target=maint;
+  if(mode==='deficit')target=maint*(1-pct/100);
+  else if(mode==='surplus')target=maint*(1+pct/100);
+  const protein=w*1.5,fat=w*1.2,carbs=Math.max(0,(target-protein*4-fat*9)/4);
+  return {bmr:bmr,maint:maint,target:target,protein:protein,fat:fat,carbs:carbs,mode:mode};
+}
+function calcRender(){
+  const r=calcCompute();
+  if(!r){$('cOut').innerHTML='<div class="co-sub">заполни вес, рост и возраст</div>';$('cApply').disabled=true;return;}
+  const diff=r.target-r.maint;
+  const sign=diff<-1?('−'+fmtN(-diff)+' ккал дефицит'):(diff>1?('+'+fmtN(diff)+' ккал профицит'):'поддержание');
+  $('cOut').innerHTML='<div class="co-big num">'+fmtN(r.target)+' <small>ккал/день</small></div>'
+    +'<div class="co-sub">'+sign+' · поддержание '+fmtN(r.maint)+' · BMR '+fmtN(r.bmr)+'</div>'
+    +'<div class="co-macros"><span style="color:#FF7A45">Б '+Math.round(r.protein)+'г</span><span style="color:#E8C25A">Ж '+Math.round(r.fat)+'г</span><span style="color:#46C9BC">У '+Math.round(r.carbs)+'г</span></div>';
+  $('cApply').disabled=false;
+}
+function onCalcMode(){
+  const m=getSeg('cMode'),lab=$('cPctLab'),pct=$('cPct');
+  if(m==='maintenance'){lab.textContent='Поддержание (без %)';pct.disabled=true;}
+  else{lab.textContent=(m==='surplus'?'Профицит, % (5–30)':'Дефицит, % (5–30)');pct.disabled=false;}
+  calcRender();
+}
+function openCalc(){
+  const w=latestWeight();if(w&&!$('cW').value)$('cW').value=w;
+  $('cErr').textContent='';calcRender();
+  $('cModal').classList.add('show');
+}
+function closeCalc(){$('cModal').classList.remove('show');}
+function calcApply(){
+  const r=calcCompute();if(!r)return;
+  const v={steps:'',sleep:'',kcal:Math.round(r.target),protein:Math.round(r.protein),fat:Math.round(r.fat),carbs:Math.round(r.carbs),target:'',tdee:Math.round(r.maint),mode:r.mode};
+  if(!SCRIPT_URL){
+    STATE.goals=STATE.goals||{};STATE.settings=STATE.settings||{};
+    STATE.goals.kcal=v.kcal;STATE.goals.protein=v.protein;STATE.goals.fat=v.fat;STATE.goals.carbs=v.carbs;
+    STATE.settings.tdee=v.tdee;STATE.settings.mode=v.mode;
+    closeCalc();saveCache(STATE);setScope(scope,period);return;
+  }
+  $('cApply').disabled=true;$('cErr').textContent='Сохранение…';
+  postGoals(v,ok=>{if(ok){closeCalc();refresh();}else{$('cApply').disabled=false;$('cErr').textContent='Не удалось сохранить.';}});
+}
+
 /* ---- общий рендер ---- */
 function render(data){
   hideLoader();
@@ -684,28 +810,20 @@ function refreshSilent(){fetchData(d=>{STATE=d;saveCache(d);updateSrc();setScope
 function setScope(s, keep){
   scope=s;
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.scope===s));
-  const dv=$('dashView'),wv=$('weightView'),mv=$('macrosView');
-  dv.style.display='none';wv.style.display='none';mv.style.display='none';
-  if(s==='weight'){wv.style.display='block';$('pickWrap').style.display='none';$('hTitle').textContent='Тренд веса';drawWeight();return;}
-  $('pickWrap').style.display='';
+  const dv=$('dashView'),wv=$('weightView');
+  if(s==='weight'){dv.style.display='none';wv.style.display='block';$('pickWrap').style.display='none';$('hTitle').textContent='Тренд веса';drawWeight();return;}
+  dv.style.display='block';wv.style.display='none';$('pickWrap').style.display='';
   const ps=periods(s);
   const sel=$('periodSel');sel.innerHTML='';
   ps.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.label;sel.appendChild(o);});
   period=(keep&&ps.some(p=>p.id===keep))?keep:(ps.length?ps[0].id:null);
   sel.value=period;
-  if(s==='macros'){
-    mv.style.display='block';
-    sel.onchange=()=>{period=sel.value;drawMacros();};
-    drawMacros();
-  }else{
-    dv.style.display='block';
-    sel.onchange=()=>{period=sel.value;drawScope();};
-    drawScope();
-  }
+  sel.onchange=()=>{period=sel.value;drawScope();};
+  drawScope();
 }
 
 function periods(s){
-  if(s==='month'||s==='macros'){
+  if(s==='month'){
     const set=new Set(STATE.log.map(r=>r.date.slice(0,7)));
     Object.keys(STATE.weight||{}).forEach(m=>{const w=STATE.weight[m];if(w&&(w.start!=null||w.end!=null))set.add(m);});
     return [...set].sort().reverse().map(m=>{const[y,mm]=m.split('-');return{id:m,label:cap(MONTHS[+mm-1])+' '+y};});
@@ -794,8 +912,10 @@ function drawScope(){
     const act=pts.map(p=>p.values[m.key]);
     const pres=rows.filter(r=>r[m.key]!=null).map(r=>r[m.key]);
     const avg=pres.length?pres.reduce((a,b)=>a+b,0)/pres.length:0;
-    const hit=m.lower?avg<=goal:avg>=goal;
+    const hit=isHit(m.key,m.lower,avg,goal);
     const stk=streak(m.key,m.lower,goal,allMap,lastDate);
+    let missLab=m.lower?'выше цели':'ниже цели';
+    if(m.key==='kcal'){const mo=(STATE.settings&&STATE.settings.mode)||'deficit';missLab=mo==='surplus'?'ниже цели':(mo==='maintenance'?'вне коридора':'выше цели');}
     const card=document.createElement('div');card.className='card';
     card.innerHTML='<div class="chead"><span class="ctitle">'+m.label+'</span>'+
       '<span class="cnow num">'+(pres.length?m.fmt(avg):'—')+m.unit+'</span>'+
@@ -803,7 +923,7 @@ function drawScope(){
       '<span class="cgoal num">цель '+m.fmt(goal)+m.unit+'</span></div>'+
       '<div class="cbody"><canvas></canvas></div>'+
       '<div class="cfoot"><span>среднее за '+SCOPE_RU[scope]+'</span>'+
-      '<span class="'+(hit?'hit':'miss')+'">'+(hit?'в цели':(m.lower?'выше цели':'ниже цели'))+'</span></div>';
+      '<span class="'+(hit?'hit':'miss')+'">'+(hit?'в цели':missLab)+'</span></div>';
     grid.appendChild(card);
     const ctx=card.querySelector('canvas').getContext('2d');
     const grad=ctx.createLinearGradient(0,0,0,132);
@@ -814,6 +934,9 @@ function drawScope(){
       {data:labels.map(()=>goal),borderColor:'#46C9BC',borderWidth:1.5,borderDash:[5,4],fill:false,pointRadius:0,pointHoverRadius:0}
     ]},options:lineOpts(m,tipKind)}));
   });
+
+  if(scope==='week'||scope==='month'){$('macrosBlock').style.display='';drawMacros();}
+  else{$('macrosBlock').style.display='none';}
 }
 
 function drawWeight(){
@@ -917,6 +1040,16 @@ $('dSave').onclick=()=>saveDay(false);
 $('dDelete').onclick=()=>saveDay(true);
 $('dDate').addEventListener('change',()=>fillDay($('dDate').value));
 $('dModal').onclick=e=>{if(e.target===$('dModal'))closeDay();};
+
+$('calcBtn').onclick=()=>{$('fabwrap').classList.remove('open');openCalc();};
+$('cCancel').onclick=closeCalc;
+$('cApply').onclick=calcApply;
+$('cModal').onclick=e=>{if(e.target===$('cModal'))closeCalc();};
+['cW','cH','cA'].forEach(id=>$(id).addEventListener('input',calcRender));
+$('cAct').addEventListener('change',calcRender);
+$('cPct').addEventListener('input',calcRender);
+bindSeg('cSex',calcRender);
+bindSeg('cMode',onCalcMode);
 
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 boot();
