@@ -80,10 +80,10 @@
   .loader-txt{font-size:11px;letter-spacing:.34em;color:var(--actual);font-weight:700}
   @keyframes pulse{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.09);opacity:1}}
 
-  .tabs{display:inline-flex;background:var(--elev);border:1px solid var(--line);border-radius:13px;
+  .tabs{display:flex;width:100%;background:var(--elev);border:1px solid var(--line);border-radius:13px;
     padding:4px;gap:2px;margin-bottom:22px}
-  .tab{appearance:none;background:none;border:none;color:var(--muted);font-family:var(--disp);
-    font-size:13px;font-weight:600;padding:8px 15px;border-radius:9px;cursor:pointer}
+  .tab{appearance:none;flex:1 1 0;min-width:0;background:none;border:none;color:var(--muted);font-family:var(--disp);
+    font-size:13px;font-weight:600;padding:8px 6px;border-radius:9px;cursor:pointer;white-space:nowrap;text-align:center}
   .tab.on{background:var(--actual);color:#11151a}
   .tab:focus-visible{outline:2px solid var(--goal);outline-offset:2px}
 
@@ -108,6 +108,8 @@
   .marker{position:absolute;top:-8px;bottom:-8px;width:2px;background:var(--gold);transition:left .9s cubic-bezier(.22,1,.36,1)}
   .marker span{position:absolute;top:-19px;left:50%;transform:translateX(-50%);white-space:nowrap;
     font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.04em}
+  .marker.m2{background:var(--bad)}
+  .marker.m2 span{top:auto;bottom:-19px;color:var(--bad)}
   .legend{display:flex;gap:22px;margin-top:18px;flex-wrap:wrap}
   .legend div{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
   .legend b{font-family:var(--mono);color:var(--tx);font-weight:700}
@@ -138,8 +140,20 @@
   .goal-grid input{width:100%;background:var(--elev);border:1px solid var(--line);border-radius:11px;color:var(--tx);font-family:var(--mono);font-size:16px;padding:10px 12px}
   .goal-grid input:focus-visible{outline:2px solid var(--goal);outline-offset:2px}
 
-  .tabs{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .tab{flex-shrink:0}
+  .tabs{max-width:100%}
+  .tab{padding:8px 2px;font-size:11.5px}
+
+  .daypick{display:inline-flex;align-items:center;position:relative;background:var(--elev);
+    border:1px solid var(--line);border-radius:12px;font-family:var(--mono);font-size:14px;
+    padding:11px 16px;cursor:pointer;letter-spacing:.02em;color:var(--tx)}
+  .daypick input{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:none;cursor:pointer;font-size:16px}
+  .pick.daymode::after{display:none}
+  .daylist{display:flex;flex-direction:column;gap:1px;border-radius:14px;overflow:hidden;border:1px solid var(--line);margin-top:6px}
+  .dl-row{display:flex;align-items:baseline;gap:10px;padding:13px 16px;background:var(--surface)}
+  .dl-n{color:var(--muted);font-size:14px;flex:1}
+  .dl-v{font-family:var(--mono);font-weight:700;font-size:16px}
+  .dl-v.off{color:var(--faint);font-weight:400}
+  .dl-goal{font-family:var(--mono);font-size:11px;color:var(--faint)}
 
   .today{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px 18px 14px;margin-bottom:18px}
   .today-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
@@ -248,16 +262,17 @@
       <h1 id="hTitle">—</h1>
     </div>
     <div>
-      <span class="pick" id="pickWrap"><select id="periodSel" aria-label="Период"></select></span>
+      <span class="pick" id="pickWrap"><select id="periodSel" aria-label="Период"></select><span class="daypick" id="dayPick" style="display:none"><span id="dayPickLabel">—</span><input type="date" id="dayInput" aria-label="Дата"></span></span>
       <div class="src" id="src"></div>
     </div>
   </header>
 
   <div class="tabs" role="tablist">
+    <button class="tab" data-scope="day">День</button>
     <button class="tab" data-scope="week">Неделя</button>
     <button class="tab on" data-scope="month">Месяц</button>
     <button class="tab" data-scope="year">Год</button>
-    <button class="tab" data-scope="weight">Тренд веса</button>
+    <button class="tab" data-scope="weight">Вес</button>
   </div>
 
   <div id="dashView">
@@ -283,11 +298,13 @@
       <div class="bar">
         <div class="track">
           <div class="fill" id="fill" style="width:0%"></div>
-          <div class="marker" id="marker" style="left:0%"><span>поддержание</span></div>
+          <div class="marker" id="marker" style="left:0%"><span>цель</span></div>
+          <div class="marker m2" id="markerM" style="left:0%"><span>поддержание</span></div>
         </div>
         <div class="legend">
           <div><span class="dot" style="background:var(--actual)"></span>Съедено <b class="num" id="lgEaten">—</b></div>
-          <div><span class="dot" style="background:var(--gold)"></span>Норма <b class="num" id="lgNorm">—</b></div>
+          <div><span class="dot" style="background:var(--gold)"></span>Цель <b class="num" id="lgGoal">—</b></div>
+          <div><span class="dot" style="background:var(--bad)"></span>Поддержание <b class="num" id="lgNorm">—</b></div>
           <div><span class="dot" style="background:var(--good)"></span>Дней записано <b class="num" id="lgDays">—</b></div>
         </div>
       </div>
@@ -295,7 +312,7 @@
 
     <div class="kpis">
       <div class="kpi"><div class="k">Съедено</div><div class="v num" id="kEaten">—</div><div class="sub">ккал за период</div></div>
-      <div class="kpi"><div class="k">Норма</div><div class="v num" id="kNorm">—</div><div class="sub">поддержание × дни</div></div>
+      <div class="kpi"><div class="k">Поддержание</div><div class="v num" id="kNorm">—</div><div class="sub">поддержание × дни</div></div>
       <div class="kpi"><div class="k">Вес факт</div><div class="v num gold" id="kWfact">—</div><div class="sub" id="kWfactSub">нач − кон</div>
         <button class="wadd" id="wAdd" aria-label="Записать вес" title="Записать вес"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg></button>
       </div>
@@ -320,6 +337,28 @@
       <div class="sec">факт против цели</div>
       <div id="mBars"></div>
     </div>
+  </div>
+
+  <div id="dayView" style="display:none">
+    <div class="today" id="dayCard">
+      <div class="today-head"><span class="t" id="dayTitle">День</span><span class="s" id="daySummary"></span></div>
+      <div class="aw" id="dayRings">
+        <svg class="aw-rings" id="dayRingsSvg" viewBox="0 0 120 120"></svg>
+        <div class="aw-legend" id="dayRingsLegend"></div>
+      </div>
+      <div class="today-empty" id="dayEmpty" style="display:none">Нет записи за этот день</div>
+    </div>
+    <div class="sec">показатели дня</div>
+    <div class="daylist" id="dayList"></div>
+    <div class="sec" style="margin-top:24px">макросы дня</div>
+    <section class="wcard">
+      <div class="macros-top">
+        <div class="donut" id="dmDonut"></div>
+        <div class="macros-legend" id="dmLegend"></div>
+      </div>
+    </section>
+    <div class="sec">факт против цели</div>
+    <div id="dmBars"></div>
   </div>
 
   <div id="weightView" style="display:none">
@@ -411,6 +450,7 @@
       <div><label>Жиры, г</label><input id="gFat" type="number" inputmode="numeric"></div>
       <div><label>Углеводы, г</label><input id="gCarbs" type="number" inputmode="numeric"></div>
       <div><label>Целевой вес, кг</label><input id="gTarget" type="number" inputmode="decimal" step="0.1"></div>
+      <div><label>Поддержание, ккал</label><input id="gMaint" type="number" inputmode="numeric"></div>
     </div>
     <div class="modal-actions">
       <button class="btn-ghost" id="gCancel">Отмена</button>
@@ -475,7 +515,7 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygGwPe9GMIYC7Eav_8DQ1Hk0yBSMNzYM26RNGLvyFsKC67O0keeLuSj-6bX2kcdf74Lg/exec";
 /* Пока пусто — сайт работает на демо-данных. Вставишь URL — оживёт на реальных. */
 
-const SAMPLE = {"log": [{"date": "2026-09-01", "weekday": "Вт", "sleep": 8.1, "steps": 8400, "kcal": 1980, "protein": 142, "fat": 66, "carbs": 198}, {"date": "2026-09-02", "weekday": "Ср", "sleep": 7.4, "steps": 11200, "kcal": 2210, "protein": 158, "fat": 74, "carbs": 224}, {"date": "2026-09-03", "weekday": "Чт", "sleep": 6.8, "steps": 6500, "kcal": 1750, "protein": 121, "fat": 58, "carbs": 171}, {"date": "2026-09-04", "weekday": "Пт", "sleep": 7.9, "steps": 9800, "kcal": 2050, "protein": 149, "fat": 69, "carbs": 205}, {"date": "2026-09-05", "weekday": "Сб", "sleep": 8.3, "steps": 12500, "kcal": 2280, "protein": 165, "fat": 78, "carbs": 231}, {"date": "2026-09-06", "weekday": "Вс", "sleep": 6.5, "steps": 7200, "kcal": 1840, "protein": 130, "fat": 61, "carbs": 182}, {"date": "2026-09-07", "weekday": "Пн", "sleep": 7.6, "steps": 10100, "kcal": 2120, "protein": 151, "fat": 71, "carbs": 210}, {"date": "2026-09-08", "weekday": "Вт", "sleep": 8.0, "steps": 9300, "kcal": 1990, "protein": 144, "fat": 67, "carbs": 199}, {"date": "2026-09-09", "weekday": "Ср", "sleep": 7.2, "steps": 13100, "kcal": 2330, "protein": 168, "fat": 80, "carbs": 238}, {"date": "2026-09-10", "weekday": "Чт", "sleep": 6.9, "steps": 8800, "kcal": 1910, "protein": 138, "fat": 64, "carbs": 191}, {"date": "2026-09-11", "weekday": "Пт", "sleep": 7.8, "steps": 10600, "kcal": 2160, "protein": 154, "fat": 73, "carbs": 216}, {"date": "2026-09-12", "weekday": "Сб", "sleep": 8.2, "steps": 7600, "kcal": 1870, "protein": 133, "fat": 62, "carbs": 186}, {"date": "2026-09-13", "weekday": "Вс", "sleep": 7.1, "steps": 11800, "kcal": 2240, "protein": 160, "fat": 75, "carbs": 226}, {"date": "2026-09-14", "weekday": "Пн", "sleep": 7.5, "steps": 9000, "kcal": 2010, "protein": 146, "fat": 68, "carbs": 201}, {"date": "2026-09-15", "weekday": "Вт", "sleep": 6.7, "steps": 6900, "kcal": 1790, "protein": 125, "fat": 59, "carbs": 176}, {"date": "2026-09-16", "weekday": "Ср", "sleep": 8.4, "steps": 12100, "kcal": 2270, "protein": 163, "fat": 77, "carbs": 229}, {"date": "2026-09-17", "weekday": "Чт", "sleep": 7.3, "steps": 10300, "kcal": 2130, "protein": 152, "fat": 72, "carbs": 212}, {"date": "2026-09-18", "weekday": "Пт", "sleep": 7.7, "steps": 8200, "kcal": 1950, "protein": 140, "fat": 65, "carbs": 195}, {"date": "2026-10-01", "weekday": "Чт", "sleep": 8.1, "steps": 8400, "kcal": 1980, "protein": 142, "fat": 66, "carbs": 198}, {"date": "2026-10-02", "weekday": "Пт", "sleep": 7.4, "steps": 11200, "kcal": 2210, "protein": 158, "fat": 74, "carbs": 224}, {"date": "2026-10-03", "weekday": "Сб", "sleep": 6.8, "steps": 6500, "kcal": 1750, "protein": 121, "fat": 58, "carbs": 171}, {"date": "2026-10-04", "weekday": "Вс", "sleep": 7.9, "steps": 9800, "kcal": 2050, "protein": 149, "fat": 69, "carbs": 205}, {"date": "2026-10-05", "weekday": "Пн", "sleep": 8.3, "steps": 12500, "kcal": 2280, "protein": 165, "fat": 78, "carbs": 231}, {"date": "2026-10-06", "weekday": "Вт", "sleep": 6.5, "steps": 7200, "kcal": 1840, "protein": 130, "fat": 61, "carbs": 182}, {"date": "2026-10-07", "weekday": "Ср", "sleep": 7.6, "steps": 10100, "kcal": 2120, "protein": 151, "fat": 71, "carbs": 210}, {"date": "2026-10-08", "weekday": "Чт", "sleep": 8.0, "steps": 9300, "kcal": 1990, "protein": 144, "fat": 67, "carbs": 199}, {"date": "2026-10-09", "weekday": "Пт", "sleep": 7.2, "steps": 13100, "kcal": 2330, "protein": 168, "fat": 80, "carbs": 238}, {"date": "2026-10-10", "weekday": "Сб", "sleep": 6.9, "steps": 8800, "kcal": 1910, "protein": 138, "fat": 64, "carbs": 191}, {"date": "2026-10-11", "weekday": "Вс", "sleep": 7.8, "steps": 10600, "kcal": 2160, "protein": 154, "fat": 73, "carbs": 216}, {"date": "2026-10-12", "weekday": "Пн", "sleep": 8.2, "steps": 7600, "kcal": 1870, "protein": 133, "fat": 62, "carbs": 186}, {"date": "2026-10-13", "weekday": "Вт", "sleep": 7.1, "steps": 11800, "kcal": 2240, "protein": 160, "fat": 75, "carbs": 226}, {"date": "2026-10-14", "weekday": "Ср", "sleep": 7.5, "steps": 9000, "kcal": 2010, "protein": 146, "fat": 68, "carbs": 201}, {"date": "2026-10-15", "weekday": "Чт", "sleep": 6.7, "steps": 6900, "kcal": 1790, "protein": 125, "fat": 59, "carbs": 176}, {"date": "2026-10-16", "weekday": "Пт", "sleep": 8.4, "steps": 12100, "kcal": 2270, "protein": 163, "fat": 77, "carbs": 229}, {"date": "2026-10-17", "weekday": "Сб", "sleep": 7.3, "steps": 10300, "kcal": 2130, "protein": 152, "fat": 72, "carbs": 212}, {"date": "2026-10-18", "weekday": "Вс", "sleep": 7.7, "steps": 8200, "kcal": 1950, "protein": 140, "fat": 65, "carbs": 195}, {"date": "2026-10-19", "weekday": "Пн", "sleep": 8.0, "steps": 11500, "kcal": 2200, "protein": 157, "fat": 74, "carbs": 221}, {"date": "2026-10-20", "weekday": "Вт", "sleep": 6.6, "steps": 7000, "kcal": 1810, "protein": 127, "fat": 60, "carbs": 179}, {"date": "2026-11-01", "weekday": "Вс", "sleep": 8.1, "steps": 8400, "kcal": 1980, "protein": 142, "fat": 66, "carbs": 198}, {"date": "2026-11-02", "weekday": "Пн", "sleep": 7.4, "steps": 11200, "kcal": 2210, "protein": 158, "fat": 74, "carbs": 224}, {"date": "2026-11-03", "weekday": "Вт", "sleep": 6.8, "steps": 6500, "kcal": 1750, "protein": 121, "fat": 58, "carbs": 171}, {"date": "2026-11-04", "weekday": "Ср", "sleep": 7.9, "steps": 9800, "kcal": 2050, "protein": 149, "fat": 69, "carbs": 205}, {"date": "2026-11-05", "weekday": "Чт", "sleep": 8.3, "steps": 12500, "kcal": 2280, "protein": 165, "fat": 78, "carbs": 231}, {"date": "2026-11-06", "weekday": "Пт", "sleep": 6.5, "steps": 7200, "kcal": 1840, "protein": 130, "fat": 61, "carbs": 182}, {"date": "2026-11-07", "weekday": "Сб", "sleep": 7.6, "steps": 10100, "kcal": 2120, "protein": 151, "fat": 71, "carbs": 210}, {"date": "2026-11-08", "weekday": "Вс", "sleep": 8.0, "steps": 9300, "kcal": 1990, "protein": 144, "fat": 67, "carbs": 199}, {"date": "2026-11-09", "weekday": "Пн", "sleep": 7.2, "steps": 13100, "kcal": 2330, "protein": 168, "fat": 80, "carbs": 238}, {"date": "2026-11-10", "weekday": "Вт", "sleep": 6.9, "steps": 8800, "kcal": 1910, "protein": 138, "fat": 64, "carbs": 191}, {"date": "2026-11-11", "weekday": "Ср", "sleep": 7.8, "steps": 10600, "kcal": 2160, "protein": 154, "fat": 73, "carbs": 216}, {"date": "2026-11-12", "weekday": "Чт", "sleep": 8.2, "steps": 7600, "kcal": 1870, "protein": 133, "fat": 62, "carbs": 186}, {"date": "2026-11-13", "weekday": "Пт", "sleep": 7.1, "steps": 11800, "kcal": 2240, "protein": 160, "fat": 75, "carbs": 226}, {"date": "2026-11-14", "weekday": "Сб", "sleep": 7.5, "steps": 9000, "kcal": 2010, "protein": 146, "fat": 68, "carbs": 201}, {"date": "2026-11-15", "weekday": "Вс", "sleep": 6.7, "steps": 6900, "kcal": 1790, "protein": 125, "fat": 59, "carbs": 176}, {"date": "2026-11-16", "weekday": "Пн", "sleep": 8.4, "steps": 12100, "kcal": 2270, "protein": 163, "fat": 77, "carbs": 229}, {"date": "2026-11-17", "weekday": "Вт", "sleep": 7.3, "steps": 10300, "kcal": 2130, "protein": 152, "fat": 72, "carbs": 212}, {"date": "2026-11-18", "weekday": "Ср", "sleep": 7.7, "steps": 8200, "kcal": 1950, "protein": 140, "fat": 65, "carbs": 195}, {"date": "2026-11-19", "weekday": "Чт", "sleep": 8.0, "steps": 11500, "kcal": 2200, "protein": 157, "fat": 74, "carbs": 221}, {"date": "2026-11-20", "weekday": "Пт", "sleep": 6.6, "steps": 7000, "kcal": 1810, "protein": 127, "fat": 60, "carbs": 179}, {"date": "2026-11-21", "weekday": "Сб", "sleep": 7.9, "steps": 9600, "kcal": 2070, "protein": 148, "fat": 70, "carbs": 207}, {"date": "2026-11-22", "weekday": "Вс", "sleep": 7.4, "steps": 10900, "kcal": 2180, "protein": 156, "fat": 73, "carbs": 218}], "goals": {"steps": 10000, "sleep": 8, "kcal": 2000, "protein": 150, "fat": 70, "carbs": 200}, "weight": {"2026-09": {"start": 83.0, "end": 81.5}, "2026-10": {"start": 81.5, "end": 80.0}, "2026-11": {"start": 80.0, "end": 78.4}}, "settings": {"tdee": 2571, "fatKcal": 7700}, "updated": "демо-данные"};
+const SAMPLE = {"log": [{"date": "2026-09-01", "weekday": "Вт", "sleep": 8.1, "steps": 8400, "kcal": 1980, "protein": 142, "fat": 66, "carbs": 198}, {"date": "2026-09-02", "weekday": "Ср", "sleep": 7.4, "steps": 11200, "kcal": 2210, "protein": 158, "fat": 74, "carbs": 224}, {"date": "2026-09-03", "weekday": "Чт", "sleep": 6.8, "steps": 6500, "kcal": 1750, "protein": 121, "fat": 58, "carbs": 171}, {"date": "2026-09-04", "weekday": "Пт", "sleep": 7.9, "steps": 9800, "kcal": 2050, "protein": 149, "fat": 69, "carbs": 205}, {"date": "2026-09-05", "weekday": "Сб", "sleep": 8.3, "steps": 12500, "kcal": 2280, "protein": 165, "fat": 78, "carbs": 231}, {"date": "2026-09-06", "weekday": "Вс", "sleep": 6.5, "steps": 7200, "kcal": 1840, "protein": 130, "fat": 61, "carbs": 182}, {"date": "2026-09-07", "weekday": "Пн", "sleep": 7.6, "steps": 10100, "kcal": 2120, "protein": 151, "fat": 71, "carbs": 210}, {"date": "2026-09-08", "weekday": "Вт", "sleep": 8.0, "steps": 9300, "kcal": 1990, "protein": 144, "fat": 67, "carbs": 199}, {"date": "2026-09-09", "weekday": "Ср", "sleep": 7.2, "steps": 13100, "kcal": 2330, "protein": 168, "fat": 80, "carbs": 238}, {"date": "2026-09-10", "weekday": "Чт", "sleep": 6.9, "steps": 8800, "kcal": 1910, "protein": 138, "fat": 64, "carbs": 191}, {"date": "2026-09-11", "weekday": "Пт", "sleep": 7.8, "steps": 10600, "kcal": 2160, "protein": 154, "fat": 73, "carbs": 216}, {"date": "2026-09-12", "weekday": "Сб", "sleep": 8.2, "steps": 7600, "kcal": 1870, "protein": 133, "fat": 62, "carbs": 186}, {"date": "2026-09-13", "weekday": "Вс", "sleep": 7.1, "steps": 11800, "kcal": 2240, "protein": 160, "fat": 75, "carbs": 226}, {"date": "2026-09-14", "weekday": "Пн", "sleep": 7.5, "steps": 9000, "kcal": 2010, "protein": 146, "fat": 68, "carbs": 201}, {"date": "2026-09-15", "weekday": "Вт", "sleep": 6.7, "steps": 6900, "kcal": 1790, "protein": 125, "fat": 59, "carbs": 176}, {"date": "2026-09-16", "weekday": "Ср", "sleep": 8.4, "steps": 12100, "kcal": 2270, "protein": 163, "fat": 77, "carbs": 229}, {"date": "2026-09-17", "weekday": "Чт", "sleep": 7.3, "steps": 10300, "kcal": 2130, "protein": 152, "fat": 72, "carbs": 212}, {"date": "2026-09-18", "weekday": "Пт", "sleep": 7.7, "steps": 8200, "kcal": 1950, "protein": 140, "fat": 65, "carbs": 195}, {"date": "2026-10-01", "weekday": "Чт", "sleep": 8.1, "steps": 8400, "kcal": 1980, "protein": 142, "fat": 66, "carbs": 198}, {"date": "2026-10-02", "weekday": "Пт", "sleep": 7.4, "steps": 11200, "kcal": 2210, "protein": 158, "fat": 74, "carbs": 224}, {"date": "2026-10-03", "weekday": "Сб", "sleep": 6.8, "steps": 6500, "kcal": 1750, "protein": 121, "fat": 58, "carbs": 171}, {"date": "2026-10-04", "weekday": "Вс", "sleep": 7.9, "steps": 9800, "kcal": 2050, "protein": 149, "fat": 69, "carbs": 205}, {"date": "2026-10-05", "weekday": "Пн", "sleep": 8.3, "steps": 12500, "kcal": 2280, "protein": 165, "fat": 78, "carbs": 231}, {"date": "2026-10-06", "weekday": "Вт", "sleep": 6.5, "steps": 7200, "kcal": 1840, "protein": 130, "fat": 61, "carbs": 182}, {"date": "2026-10-07", "weekday": "Ср", "sleep": 7.6, "steps": 10100, "kcal": 2120, "protein": 151, "fat": 71, "carbs": 210}, {"date": "2026-10-08", "weekday": "Чт", "sleep": 8.0, "steps": 9300, "kcal": 1990, "protein": 144, "fat": 67, "carbs": 199}, {"date": "2026-10-09", "weekday": "Пт", "sleep": 7.2, "steps": 13100, "kcal": 2330, "protein": 168, "fat": 80, "carbs": 238}, {"date": "2026-10-10", "weekday": "Сб", "sleep": 6.9, "steps": 8800, "kcal": 1910, "protein": 138, "fat": 64, "carbs": 191}, {"date": "2026-10-11", "weekday": "Вс", "sleep": 7.8, "steps": 10600, "kcal": 2160, "protein": 154, "fat": 73, "carbs": 216}, {"date": "2026-10-12", "weekday": "Пн", "sleep": 8.2, "steps": 7600, "kcal": 1870, "protein": 133, "fat": 62, "carbs": 186}, {"date": "2026-10-13", "weekday": "Вт", "sleep": 7.1, "steps": 11800, "kcal": 2240, "protein": 160, "fat": 75, "carbs": 226}, {"date": "2026-10-14", "weekday": "Ср", "sleep": 7.5, "steps": 9000, "kcal": 2010, "protein": 146, "fat": 68, "carbs": 201}, {"date": "2026-10-15", "weekday": "Чт", "sleep": 6.7, "steps": 6900, "kcal": 1790, "protein": 125, "fat": 59, "carbs": 176}, {"date": "2026-10-16", "weekday": "Пт", "sleep": 8.4, "steps": 12100, "kcal": 2270, "protein": 163, "fat": 77, "carbs": 229}, {"date": "2026-10-17", "weekday": "Сб", "sleep": 7.3, "steps": 10300, "kcal": 2130, "protein": 152, "fat": 72, "carbs": 212}, {"date": "2026-10-18", "weekday": "Вс", "sleep": 7.7, "steps": 8200, "kcal": 1950, "protein": 140, "fat": 65, "carbs": 195}, {"date": "2026-10-19", "weekday": "Пн", "sleep": 8.0, "steps": 11500, "kcal": 2200, "protein": 157, "fat": 74, "carbs": 221}, {"date": "2026-10-20", "weekday": "Вт", "sleep": 6.6, "steps": 7000, "kcal": 1810, "protein": 127, "fat": 60, "carbs": 179}, {"date": "2026-11-01", "weekday": "Вс", "sleep": 8.1, "steps": 8400, "kcal": 1980, "protein": 142, "fat": 66, "carbs": 198}, {"date": "2026-11-02", "weekday": "Пн", "sleep": 7.4, "steps": 11200, "kcal": 2210, "protein": 158, "fat": 74, "carbs": 224}, {"date": "2026-11-03", "weekday": "Вт", "sleep": 6.8, "steps": 6500, "kcal": 1750, "protein": 121, "fat": 58, "carbs": 171}, {"date": "2026-11-04", "weekday": "Ср", "sleep": 7.9, "steps": 9800, "kcal": 2050, "protein": 149, "fat": 69, "carbs": 205}, {"date": "2026-11-05", "weekday": "Чт", "sleep": 8.3, "steps": 12500, "kcal": 2280, "protein": 165, "fat": 78, "carbs": 231}, {"date": "2026-11-06", "weekday": "Пт", "sleep": 6.5, "steps": 7200, "kcal": 1840, "protein": 130, "fat": 61, "carbs": 182}, {"date": "2026-11-07", "weekday": "Сб", "sleep": 7.6, "steps": 10100, "kcal": 2120, "protein": 151, "fat": 71, "carbs": 210}, {"date": "2026-11-08", "weekday": "Вс", "sleep": 8.0, "steps": 9300, "kcal": 1990, "protein": 144, "fat": 67, "carbs": 199}, {"date": "2026-11-09", "weekday": "Пн", "sleep": 7.2, "steps": 13100, "kcal": 2330, "protein": 168, "fat": 80, "carbs": 238}, {"date": "2026-11-10", "weekday": "Вт", "sleep": 6.9, "steps": 8800, "kcal": 1910, "protein": 138, "fat": 64, "carbs": 191}, {"date": "2026-11-11", "weekday": "Ср", "sleep": 7.8, "steps": 10600, "kcal": 2160, "protein": 154, "fat": 73, "carbs": 216}, {"date": "2026-11-12", "weekday": "Чт", "sleep": 8.2, "steps": 7600, "kcal": 1870, "protein": 133, "fat": 62, "carbs": 186}, {"date": "2026-11-13", "weekday": "Пт", "sleep": 7.1, "steps": 11800, "kcal": 2240, "protein": 160, "fat": 75, "carbs": 226}, {"date": "2026-11-14", "weekday": "Сб", "sleep": 7.5, "steps": 9000, "kcal": 2010, "protein": 146, "fat": 68, "carbs": 201}, {"date": "2026-11-15", "weekday": "Вс", "sleep": 6.7, "steps": 6900, "kcal": 1790, "protein": 125, "fat": 59, "carbs": 176}, {"date": "2026-11-16", "weekday": "Пн", "sleep": 8.4, "steps": 12100, "kcal": 2270, "protein": 163, "fat": 77, "carbs": 229}, {"date": "2026-11-17", "weekday": "Вт", "sleep": 7.3, "steps": 10300, "kcal": 2130, "protein": 152, "fat": 72, "carbs": 212}, {"date": "2026-11-18", "weekday": "Ср", "sleep": 7.7, "steps": 8200, "kcal": 1950, "protein": 140, "fat": 65, "carbs": 195}, {"date": "2026-11-19", "weekday": "Чт", "sleep": 8.0, "steps": 11500, "kcal": 2200, "protein": 157, "fat": 74, "carbs": 221}, {"date": "2026-11-20", "weekday": "Пт", "sleep": 6.6, "steps": 7000, "kcal": 1810, "protein": 127, "fat": 60, "carbs": 179}, {"date": "2026-11-21", "weekday": "Сб", "sleep": 7.9, "steps": 9600, "kcal": 2070, "protein": 148, "fat": 70, "carbs": 207}, {"date": "2026-11-22", "weekday": "Вс", "sleep": 7.4, "steps": 10900, "kcal": 2180, "protein": 156, "fat": 73, "carbs": 218}], "goals": {"steps": 10000, "sleep": 8, "kcal": 2000, "protein": 150, "fat": 70, "carbs": 200}, "weight": {"2026-09": {"start": 83.0, "end": 81.5}, "2026-10": {"start": 81.5, "end": 80.0}, "2026-11": {"start": 80.0, "end": 78.4}}, "settings": {"tdee": 2571, "fatKcal": 7700, "maint": 2571}, "updated": "демо-данные"};
 
 const METRICS = [
   {key:'steps',   label:'Шаги',     unit:'',   fmt:v=>fmtN(v), lower:false},
@@ -592,17 +632,19 @@ function openGoals(){
   $('gFat').value=g.fat!=null?g.fat:'';
   $('gCarbs').value=g.carbs!=null?g.carbs:'';
   $('gTarget').value=(STATE.settings&&STATE.settings.goalWeight!=null)?STATE.settings.goalWeight:'';
+  $('gMaint').value=(STATE.settings&&(STATE.settings.maint||STATE.settings.tdee))?(STATE.settings.maint||STATE.settings.tdee):'';
   $('gErr').textContent='';$('gSave').disabled=false;
   $('gModal').classList.add('show');
 }
 function closeGoals(){$('gModal').classList.remove('show');}
 function saveGoals(){
   const v={steps:$('gSteps').value.trim(),sleep:$('gSleep').value.trim(),kcal:$('gKcal').value.trim(),
-    protein:$('gProtein').value.trim(),fat:$('gFat').value.trim(),carbs:$('gCarbs').value.trim(),target:$('gTarget').value.trim()};
+    protein:$('gProtein').value.trim(),fat:$('gFat').value.trim(),carbs:$('gCarbs').value.trim(),target:$('gTarget').value.trim(),maint:$('gMaint').value.trim()};
   if(!SCRIPT_URL){
     STATE.goals=STATE.goals||{};STATE.settings=STATE.settings||{};
     ['steps','sleep','kcal','protein','fat','carbs'].forEach(k=>{if(v[k]!=='')STATE.goals[k]=+v[k];});
     if(v.target!=='')STATE.settings.goalWeight=+v.target;
+    if(v.maint!=='')STATE.settings.maint=+v.maint;
     closeGoals();saveCache(STATE);setScope(scope,period);return;
   }
   $('gSave').disabled=true;$('gErr').textContent='Сохранение…';
@@ -616,7 +658,7 @@ function postGoals(v,done){
   s.src=SCRIPT_URL+(SCRIPT_URL.includes('?')?'&':'?')+'action=goals&callback='+name+'&token='+encodeURIComponent(authToken)
     +'&steps='+encodeURIComponent(v.steps)+'&sleep='+encodeURIComponent(v.sleep)+'&kcal='+encodeURIComponent(v.kcal)
     +'&protein='+encodeURIComponent(v.protein)+'&fat='+encodeURIComponent(v.fat)+'&carbs='+encodeURIComponent(v.carbs)
-    +'&target='+encodeURIComponent(v.target||'')+'&tdee='+encodeURIComponent(v.tdee||'')+'&mode='+encodeURIComponent(v.mode||'');
+    +'&target='+encodeURIComponent(v.target||'')+'&tdee='+encodeURIComponent(v.tdee||'')+'&mode='+encodeURIComponent(v.mode||'')+'&maint='+encodeURIComponent(v.maint||'');
   document.body.appendChild(s);
 }
 
@@ -625,6 +667,29 @@ function awRing(R,ratio,col){
   const c=2*Math.PI*R;
   return '<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="'+col+'" stroke-opacity="0.18" stroke-width="9"/>'
     +'<circle class="awp" cx="60" cy="60" r="'+R+'" fill="none" stroke="'+col+'" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+c+'" data-off="'+(c*(1-Math.max(0,Math.min(1,ratio))))+'" transform="rotate(-90 60 60)"/>';
+}
+const MONTHS_GEN=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+function fmtDateRu(iso){const p=iso.split('-');return (+p[2])+' '+MONTHS_GEN[(+p[1])-1]+' '+p[0];}
+function latestLoggedDay(){return (STATE.log||[]).reduce((mx,r)=>r.date>mx?r.date:mx,'');}
+
+const RING_ITEMS=[{key:'steps',label:'Шаги',col:'#93E05A',R:46},{key:'kcal',label:'Калории',col:'#FF7A45',R:34},{key:'sleep',label:'Сон',col:'#46C9BC',R:22}];
+function buildRings(r,svgEl,legEl){
+  const g=STATE.goals,mode=(STATE.settings&&STATE.settings.mode)||'deficit';let hits=0,svg='',leg='';
+  RING_ITEMS.forEach(it=>{
+    const m=METRICS.find(x=>x.key===it.key);
+    const v=r?r[it.key]:null,goal=g[it.key],has=v!=null;
+    const over=it.key==='kcal'&&has&&goal&&mode!=='surplus'&&v>goal+100;
+    const hit=!over&&has&&isHit(it.key,m.lower,v,goal);if(hit)hits++;
+    const col=over?'#FF5C72':it.col;
+    const ratio=(has&&goal)?Math.min(v/goal,1):0;
+    svg+=awRing(it.R,ratio,col);
+    const mark=over?' ✗':(hit?' ✓':'');
+    const vCol=over?'var(--bad)':(hit?'var(--good)':it.col);
+    leg+='<div class="awl"><span class="dot" style="background:'+col+'"></span><span class="awl-n">'+it.label+'</span>'
+      +'<span class="awl-v" style="color:'+vCol+'">'+(has?m.fmt(v)+m.unit:'—')+mark+'</span></div>';
+  });
+  svgEl.innerHTML=svg;legEl.innerHTML=leg;animateStroke('.awp','off','strokeDashoffset');
+  return hits;
 }
 function renderToday(){
   const card=$('todayCard');
@@ -636,21 +701,44 @@ function renderToday(){
   const r=(STATE.log||[]).find(x=>x.date===iso2(now));
   if(!r){$('tdRings').style.display='none';$('tdEmpty').style.display='flex';$('tdSummary').textContent='';return;}
   $('tdRings').style.display='flex';$('tdEmpty').style.display='none';
-  const g=STATE.goals;
-  const items=[{key:'steps',label:'Шаги',col:'#93E05A',R:46},{key:'kcal',label:'Калории',col:'#FF7A45',R:34},{key:'sleep',label:'Сон',col:'#46C9BC',R:22}];
-  let hits=0,svg='',leg='';
-  items.forEach(it=>{
-    const m=METRICS.find(x=>x.key===it.key);
-    const v=r[it.key],goal=g[it.key],has=v!=null;
-    const hit=has&&isHit(it.key,m.lower,v,goal);if(hit)hits++;
-    const ratio=(has&&goal)?Math.min(v/goal,1):0;
-    svg+=awRing(it.R,ratio,it.col);
-    leg+='<div class="awl"><span class="dot" style="background:'+it.col+'"></span><span class="awl-n">'+it.label+'</span>'
-      +'<span class="awl-v" style="color:'+(hit?'var(--good)':it.col)+'">'+(has?m.fmt(v)+m.unit:'—')+(hit?' ✓':'')+'</span></div>';
-  });
-  $('awSvg').innerHTML=svg;$('awLegend').innerHTML=leg;
+  const hits=buildRings(r,$('awSvg'),$('awLegend'));
   $('tdSummary').textContent=hits+' из 3 в цели';
-  animateStroke('.awp','off','strokeDashoffset');
+}
+
+/* ---- вкладка «День» ---- */
+function drawDay(){
+  const d=period;
+  $('dayPickLabel').textContent=fmtDateRu(d);
+  const r=(STATE.log||[]).find(x=>x.date===d);
+  if(!r){
+    $('dayRings').style.display='none';$('dayEmpty').style.display='block';$('daySummary').textContent='';
+  }else{
+    $('dayRings').style.display='flex';$('dayEmpty').style.display='none';
+    const hits=buildRings(r,$('dayRingsSvg'),$('dayRingsLegend'));
+    $('daySummary').textContent=hits+' из 3 в цели';
+  }
+  drawDayList(r);
+  drawDayMacros(r);
+}
+function drawDayMacros(r){
+  const g=STATE.goals;
+  const P=r&&r.protein!=null?r.protein:0,F=r&&r.fat!=null?r.fat:0,Cb=r&&r.carbs!=null?r.carbs:0;
+  const kP=P*4,kF=F*9,kC=Cb*4,kTot=(kP+kF+kC)||1;
+  $('dmDonut').innerHTML=donut([[kP/kTot,'#FF7A45'],[kF/kTot,'#E8C25A'],[kC/kTot,'#46C9BC']]);
+  animateStroke('.dseg','da','strokeDasharray');
+  $('dmLegend').innerHTML=[['Белки','#FF7A45',P,kP],['Жиры','#E8C25A',F,kF],['Углеводы','#46C9BC',Cb,kC]]
+    .map(it=>'<div class="ml-row"><span class="dot" style="background:'+it[1]+'"></span><span class="nm">'+it[0]+'</span><b>'+Math.round(it[2])+' г</b><span class="pc">'+Math.round(it[3]/kTot*100)+'%</span></div>').join('');
+  $('dmBars').innerHTML=[['Белки',P,g.protein||0,'#FF7A45'],['Жиры',F,g.fat||0,'#E8C25A'],['Углеводы',Cb,g.carbs||0,'#46C9BC']]
+    .map(it=>mbar(it[0],it[1],it[2],it[3])).join('');
+}
+function drawDayList(r){
+  const g=STATE.goals;
+  $('dayList').innerHTML=METRICS.map(m=>{
+    const v=r?r[m.key]:null,has=v!=null,goal=g[m.key];
+    const val=has?(m.fmt(v)+m.unit):'—';
+    const goalTxt=goal?'<span class="dl-goal">цель '+m.fmt(goal)+m.unit+'</span>':'';
+    return '<div class="dl-row"><span class="dl-n">'+m.label+'</span><span class="dl-v'+(has?'':' off')+'">'+val+'</span>'+goalTxt+'</div>';
+  }).join('');
 }
 function animateStroke(sel,attr,prop){
   const els=document.querySelectorAll(sel);
@@ -780,11 +868,11 @@ function openCalc(){
 function closeCalc(){$('cModal').classList.remove('show');}
 function calcApply(){
   const r=calcCompute();if(!r)return;
-  const v={steps:'',sleep:'',kcal:Math.round(r.target),protein:Math.round(r.protein),fat:Math.round(r.fat),carbs:Math.round(r.carbs),target:'',tdee:Math.round(r.maint),mode:r.mode};
+  const v={steps:'',sleep:'',kcal:Math.round(r.target),protein:Math.round(r.protein),fat:Math.round(r.fat),carbs:Math.round(r.carbs),target:'',tdee:Math.round(r.maint),maint:Math.round(r.maint),mode:r.mode};
   if(!SCRIPT_URL){
     STATE.goals=STATE.goals||{};STATE.settings=STATE.settings||{};
     STATE.goals.kcal=v.kcal;STATE.goals.protein=v.protein;STATE.goals.fat=v.fat;STATE.goals.carbs=v.carbs;
-    STATE.settings.tdee=v.tdee;STATE.settings.mode=v.mode;
+    STATE.settings.tdee=v.tdee;STATE.settings.maint=v.maint;STATE.settings.mode=v.mode;
     closeCalc();saveCache(STATE);setScope(scope,period);return;
   }
   $('cApply').disabled=true;$('cErr').textContent='Сохранение…';
@@ -796,6 +884,7 @@ function render(data){
   hideLoader();
   STATE=data; saveCache(data); updateSrc();
   document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>setScope(b.dataset.scope));
+  $('dayInput').addEventListener('change',()=>{if($('dayInput').value){period=$('dayInput').value;drawDay();}});
   $('refreshBtn').onclick=()=>{$('fabwrap').classList.remove('open');refresh();};
   setScope('month');
 }
@@ -810,9 +899,18 @@ function refreshSilent(){fetchData(d=>{STATE=d;saveCache(d);updateSrc();setScope
 function setScope(s, keep){
   scope=s;
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.scope===s));
-  const dv=$('dashView'),wv=$('weightView');
-  if(s==='weight'){dv.style.display='none';wv.style.display='block';$('pickWrap').style.display='none';$('hTitle').textContent='Тренд веса';drawWeight();return;}
-  dv.style.display='block';wv.style.display='none';$('pickWrap').style.display='';
+  const dv=$('dashView'),wv=$('weightView'),dyv=$('dayView');
+  if(s==='weight'){dv.style.display='none';wv.style.display='block';dyv.style.display='none';$('pickWrap').style.display='none';$('hTitle').textContent='Тренд веса';drawWeight();return;}
+  if(s==='day'){
+    dv.style.display='none';wv.style.display='none';dyv.style.display='block';
+    $('pickWrap').style.display='';$('hTitle').textContent='День';
+    $('periodSel').style.display='none';$('dayPick').style.display='';$('pickWrap').classList.add('daymode');
+    period=(keep&&/^\d{4}-\d{2}-\d{2}$/.test(keep))?keep:(latestLoggedDay()||iso2(new Date()));
+    $('dayInput').value=period;
+    drawDay();return;
+  }
+  dv.style.display='block';wv.style.display='none';dyv.style.display='none';$('pickWrap').style.display='';
+  $('periodSel').style.display='';$('dayPick').style.display='none';$('pickWrap').classList.remove('daymode');
   const ps=periods(s);
   const sel=$('periodSel');sel.innerHTML='';
   ps.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.label;sel.appendChild(o);});
@@ -883,14 +981,16 @@ function drawScope(){
   $('gridSec').textContent='метрики · '+SCOPE_RU[scope].replace('неделю','неделя').replace('месяц','месяц').replace('год','год')+' · факт против цели';
 
   const eat=rows.filter(r=>r.kcal!=null),days=eat.length;
-  const eaten=eat.reduce((s,r)=>s+r.kcal,0),norm=set.tdee*days,deficit=eaten-norm;
+  const eaten=eat.reduce((s,r)=>s+r.kcal,0);
+  const maintDay=(set.maint||set.tdee||0),goalDay=(g.kcal||0);
+  const norm=maintDay*days,goalTot=goalDay*days,deficit=eaten-norm;
   const kgCalc=set.fatKcal?(-deficit/set.fatKcal):0;
   const dv=$('defVal');dv.className='deficit num '+(deficit<=0?'cut':'surp');
   animateNum(dv,deficit,v=>(v<=0?'−':'+')+fmtN(Math.abs(v))+' <small>ккал</small>');
   $('kgCalc').textContent=(kgCalc>=0?'−':'+')+Math.abs(kgCalc).toFixed(2)+' кг';
-  const scale=Math.max(norm,eaten)*1.06||1;
-  setTimeout(()=>{$('fill').style.width=(eaten/scale*100)+'%';$('marker').style.left=(norm/scale*100)+'%';},60);
-  $('lgEaten').textContent=fmtN(eaten);$('lgNorm').textContent=fmtN(norm);$('lgDays').textContent=days;
+  const scale=Math.max(eaten,norm,goalTot,1)*1.06;
+  setTimeout(()=>{$('fill').style.width=Math.min(eaten/scale*100,100)+'%';$('marker').style.left=Math.min(goalTot/scale*100,100)+'%';$('markerM').style.left=Math.min(norm/scale*100,100)+'%';},60);
+  $('lgEaten').textContent=fmtN(eaten);$('lgGoal').textContent=fmtN(goalTot);$('lgNorm').textContent=fmtN(norm);$('lgDays').textContent=days;
   $('kEaten').textContent=fmtN(eaten);$('kNorm').textContent=fmtN(norm);
 
   const w=weightForScope();
@@ -994,7 +1094,7 @@ function drawWeight(){
 
 function monthKgCalc(m){
   const rows=STATE.log.filter(r=>r.date.slice(0,7)===m&&r.kcal!=null);
-  const eaten=rows.reduce((s,r)=>s+r.kcal,0),norm=STATE.settings.tdee*rows.length;
+  const eaten=rows.reduce((s,r)=>s+r.kcal,0),norm=(STATE.settings.maint||STATE.settings.tdee||0)*rows.length;
   return STATE.settings.fatKcal?(-(eaten-norm)/STATE.settings.fatKcal):0;
 }
 
